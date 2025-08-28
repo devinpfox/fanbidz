@@ -7,10 +7,10 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "13.0.4"
   }
   public: {
     Tables: {
@@ -131,20 +131,37 @@ export type Database = {
       likes: {
         Row: {
           created_at: string | null
+          id: string
           listing_id: string | null
           user_id: string | null
         }
         Insert: {
           created_at?: string | null
+          id?: string
           listing_id?: string | null
           user_id?: string | null
         }
         Update: {
           created_at?: string | null
+          id?: string
           listing_id?: string | null
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_listing"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_user"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "likes_listing_id_fkey"
             columns: ["listing_id"]
@@ -165,12 +182,14 @@ export type Database = {
         Row: {
           buy_now: number | null
           buynow: number | null
+          category: string | null
           comments: number | null
           created_at: string | null
           date_posted: string | null
           description: string | null
+          end_at: string | null
           id: string
-          image: string | null
+          images: string[] | null
           is_charity: boolean | null
           last_bid: number | null
           likes: number | null
@@ -186,12 +205,14 @@ export type Database = {
         Insert: {
           buy_now?: number | null
           buynow?: number | null
+          category?: string | null
           comments?: number | null
           created_at?: string | null
           date_posted?: string | null
           description?: string | null
+          end_at?: string | null
           id?: string
-          image?: string | null
+          images?: string[] | null
           is_charity?: boolean | null
           last_bid?: number | null
           likes?: number | null
@@ -207,12 +228,14 @@ export type Database = {
         Update: {
           buy_now?: number | null
           buynow?: number | null
+          category?: string | null
           comments?: number | null
           created_at?: string | null
           date_posted?: string | null
           description?: string | null
+          end_at?: string | null
           id?: string
-          image?: string | null
+          images?: string[] | null
           is_charity?: boolean | null
           last_bid?: number | null
           likes?: number | null
@@ -242,15 +265,114 @@ export type Database = {
           },
         ]
       }
+      order_messages: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          order_id: string
+          sender_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          order_id: string
+          sender_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          order_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_messages_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          buyer_id: string
+          created_at: string | null
+          id: string
+          listing_id: string
+          paid_at: string | null
+          price: number
+          seller_id: string
+          shipped_at: string | null
+          shipping: Json | null
+          status: string
+          tracking_number: string | null
+        }
+        Insert: {
+          buyer_id: string
+          created_at?: string | null
+          id?: string
+          listing_id: string
+          paid_at?: string | null
+          price: number
+          seller_id: string
+          shipped_at?: string | null
+          shipping?: Json | null
+          status?: string
+          tracking_number?: string | null
+        }
+        Update: {
+          buyer_id?: string
+          created_at?: string | null
+          id?: string
+          listing_id?: string
+          paid_at?: string | null
+          price?: number
+          seller_id?: string
+          shipped_at?: string | null
+          shipping?: Json | null
+          status?: string
+          tracking_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar: string | null
           bio: string | null
+          coins: number
+          created_at: string | null
           display_name: string | null
           email: string | null
           first_name: string | null
           full_name: string | null
           id: string
+          is_admin: boolean | null
           last_name: string | null
           phone: string | null
           rating: number | null
@@ -262,11 +384,14 @@ export type Database = {
         Insert: {
           avatar?: string | null
           bio?: string | null
+          coins?: number
+          created_at?: string | null
           display_name?: string | null
           email?: string | null
           first_name?: string | null
           full_name?: string | null
           id: string
+          is_admin?: boolean | null
           last_name?: string | null
           phone?: string | null
           rating?: number | null
@@ -278,11 +403,14 @@ export type Database = {
         Update: {
           avatar?: string | null
           bio?: string | null
+          coins?: number
+          created_at?: string | null
           display_name?: string | null
           email?: string | null
           first_name?: string | null
           full_name?: string | null
           id?: string
+          is_admin?: boolean | null
           last_name?: string | null
           phone?: string | null
           rating?: number | null
@@ -291,29 +419,145 @@ export type Database = {
           username?: string | null
           website?: string | null
         }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          type?: string | null
+          user_id?: string | null
+        }
         Relationships: [
           {
-            foreignKeyName: "profiles_id_fkey"
-            columns: ["id"]
+            foreignKeyName: "transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallet_transactions: {
+        Row: {
+          coins: number
+          created_at: string
+          id: string
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          coins: number
+          created_at?: string
+          id?: string
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          coins?: number
+          created_at?: string
+          id?: string
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallets: {
+        Row: {
+          balance: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          balance?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          balance?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallets_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: true
-            referencedRelation: "users_extended"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
       }
     }
     Views: {
-      users_extended: {
-        Row: {
-          email: string | null
-          id: string | null
-          username: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      buy_now: {
+        Args:
+          | { p_buyer_id: string; p_listing_id: string }
+          | { p_listing_id: string; p_shipping?: Json }
+        Returns: string
+      }
+      buy_now_tx: {
+        Args: { p_buyer: string; p_listing: string }
+        Returns: string
+      }
+      get_all_listings_with_counts: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          avatar: string
+          buy_now: number
+          comment_count: number
+          created_at: string
+          id: string
+          image: string
+          last_bid: number
+          like_count: number
+          seconds_left: number
+          title: string
+          user_id: string
+          username: string
+        }[]
+      }
+      get_email_by_username: {
+        Args: { p_username: string }
+        Returns: string
+      }
+      increment_profile_coins: {
+        Args: { p_delta: number; p_user_id: string }
+        Returns: undefined
+      }
+      increment_wallet: {
+        Args: { p_delta: number; p_user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

@@ -4,30 +4,39 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth(); // Assuming AuthContext provides isLoading
+  const { user, loading } = useAuth(); // use loading (not isLoading)
   const router = useRouter();
   const pathname = usePathname();
 
+  // Any route in here will be accessible without login
   const publicRoutes = ["/login", "/signup"];
-  const isPublicRoute = publicRoutes.includes(pathname);
+  const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
 
   useEffect(() => {
-    // Only redirect if user is not logged in, not loading, and on a protected route
-    if (!isLoading && !user && !isPublicRoute) {
-      router.push("/login");
+    // Only redirect after loading is finished
+    if (!loading && !user && !isPublicRoute) {
+      router.replace("/login");
     }
-  }, [user, isLoading, isPublicRoute, router]);
+  }, [user, loading, isPublicRoute, router]);
 
-  // Show a basic loading state while authentication status is being determined
-  if (isLoading) {
-    return <div className="p-6 text-center text-gray-600">Loading authentication status...</div>;
+  // While checking auth status
+  if (loading) {
+    return (
+      <div className="p-6 text-center text-gray-600">
+        Loading authentication status...
+      </div>
+    );
   }
 
-  // If user is not logged in and on a protected route, show a redirecting message
+  // If not logged in and on a protected route, show redirecting message
   if (!user && !isPublicRoute) {
-    return <div className="p-6 text-center text-gray-600">Redirecting to login...</div>;
+    return (
+      <div className="p-6 text-center text-gray-600">
+        Redirecting to login...
+      </div>
+    );
   }
 
-  // If user is logged in or on a public route, render children
+  // If logged in OR on a public route, render children
   return <>{children}</>;
 }

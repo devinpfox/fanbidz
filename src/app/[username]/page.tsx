@@ -1,107 +1,188 @@
+// app/[username]/page.tsx
+export const revalidate = 0;
+
 import { cookies } from "next/headers";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import type { Database } from "../../../types/supabase";
 import FollowButton from "@/components/FollowButton";
+import ProfileOwnerButtons from "@/components/ProfileOwnerButtons";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 
-interface Props {
-  params: { username: string };
-}
+interface Props { params: { username: string } }
 
-// ✨ THE FIX: Declare the component function as 'async'
 export default async function UserProfilePage({ params }: Props) {
-  const supabase = createServerComponentClient<Database>({
-    cookies
-  });
+  const supabase = createServerComponentClient<Database>({ cookies });
 
-  // 1. Get profile based on username from URL
+  // 1) Profile (include role so we can branch)
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("id, username, avatar")
-    .eq("username", params.username) // This line will now be safe
+    .select("id, username, avatar, bio, website, display_name, full_name, role")
+    .eq("username", params.username)
     .single();
 
   if (!profile || profileError) return notFound();
 
-  // 2. Get logged-in user to show follow button if necessary
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const currentUserId = session?.user?.id || null;
+  // 2) Current user
+  const { data: { session } } = await supabase.auth.getSession();
+  const currentUserId = session?.user?.id ?? null;
+  const isMe = currentUserId === profile.id;
+  const isConsumerOwner = isMe && (profile.role === "consumer"); // 👈 key flag
 
-  // 3. Fetch listings by this user
-  const { data: listings } = await supabase
-    .from("listings")
-    .select("id, title, image, buy_now, created_at, last_bid")
-    .eq("user_id", profile.id)
-    .order("created_at", { ascending: false });
+  // 3a) Creator listings (only needed when NOT consumer-owner)
+  let listings:
+    | Array<{ id: string; title: string | null; images: string[] | null; buy_now: number | null; created_at: string | null; last_bid: number | null; }>
+    | null = null;
 
-  // 4. Get follower/following counts (with correct types)
+  if (!isConsumerOwner) {
+    const listingsRes = await supabase
+      .from("listings")
+      .select("id, title, images, buy_now, created_at, last_bid")
+      .eq("user_id", profile.id)
+      .order("created_at", { ascending: false });
+    listings = listingsRes.data ?? [];
+  }
+
+  // 3b) Buyer orders (only needed when consumer-owner)
+  let orders:
+    | Array<{
+        id: string;
+        status: string;
+        created_at: string | null;
+        price: number;
+        listings: { title: string | null; images: string[] | null } | null;
+      }>
+    | null = null;
+
+  if (isConsumerOwner) {
+    const ordersRes = await supabase
+      .from("orders")
+      .select(`
+        id, status, created_at, price,
+        listings:listing_id ( title, images )
+      `)
+      .eq("buyer_id", profile.id)
+      .order("created_at", { ascending: false });
+    orders = ordersRes.data ?? [];
+  }
+
+  // 4) Follow counts (unchanged)
   const [followerRes, followingRes] = await Promise.all([
-    supabase
-      .from("follows")
-      .select("*", { count: "exact", head: true })
-      .eq("following_id", profile.id),
-    supabase
-      .from("follows")
-      .select("*", { count: "exact", head: true })
-      .eq("follower_id", profile.id),
+    supabase.from("follows").select("*", { count: "exact", head: true }).eq("following_id", profile.id),
+    supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", profile.id),
   ]);
-
   const followerCount = followerRes?.count ?? 0;
   const followingCount = followingRes?.count ?? 0;
 
+  const displayName = profile.display_name ?? profile.full_name ?? `@${profile.username}`;
+  const websiteHref = profile.website
+    ? (profile.website.startsWith("http") ? profile.website : `https://${profile.website}`)
+    : null;
+
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      {/* User Info Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <img
-            src={profile.avatar ?? "https://i.pravatar.cc/40"}
-            alt="Avatar"
-            className="w-14 h-14 rounded-full"
-          />
-          <div>
-            <h1 className="text-xl font-semibold">@{profile.username}</h1>
-            <p className="text-sm text-gray-500">
-              {followerCount} Followers • {followingCount} Following
-            </p>
+    <div className="max-w-4xl mx-auto px-4 py-8 bg-white min-h-screen">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8 mb-8">
+        <img
+          src={profile.avatar ?? "https://i.pravatar.cc/150"}
+          alt="Avatar"
+          className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover border"
+        />
+        <div className="flex-1 w-full">
+          <div className="flex items-center gap-4 justify-center sm:justify-start">
+            <h1 className="text-2xl font-semibold">{displayName}</h1>
+            {!isMe && currentUserId && <FollowButton profileId={profile.id} />}
+          </div>
+          <p className="text-sm text-gray-600 text-center sm:text-left">@{profile.username}</p>
+
+          <div className="flex justify-center sm:justify-start gap-8 mt-2 text-sm text-gray-600">
+            <span><strong>{listings?.length || 0}</strong> posts</span>
+            <span><strong>{followerCount}</strong> followers</span>
+            <span><strong>{followingCount}</strong> following</span>
+          </div>
+
+          {/* Owner actions */}
+          {isMe && <ProfileOwnerButtons username={profile.username} />}
+
+          {/* Bio + Website */}
+          <div className="mt-4 text-sm leading-snug text-center sm:text-left space-y-1">
+            {profile.bio ? <p>{profile.bio}</p> : <p className="text-gray-400">No bio yet.</p>}
+            {websiteHref && (
+              <a
+                href={websiteHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline break-all"
+              >
+                {profile.website}
+              </a>
+            )}
           </div>
         </div>
-
-        {/* Show follow button if viewing someone else's profile */}
-        {currentUserId && currentUserId !== profile.id && (
-          <FollowButton profileId={profile.id} />
-        )}
       </div>
 
-      {/* Listings */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        {listings?.length ? (
-          listings.map((listing) => (
-            <div
-              key={listing.id}
-              className="bg-white rounded shadow overflow-hidden"
-            >
-              <img
-                src={listing.image ?? "https://via.placeholder.com/400x300"}
-                alt="Listing"
-                className="w-full h-48 object-cover"
-              />
-              <div className="p-4">
-                <p className="font-semibold">{listing.title}</p>
-                <p className="text-sm text-gray-600">
-                  ${listing.buy_now?.toFixed(2)}
-                </p>
-              </div>
-            </div>
-          ))
-        ) : (
-          <p className="text-gray-500 text-sm">
-            This user hasn’t posted any listings yet.
-          </p>
-        )}
+      {/* Highlights (placeholder) */}
+      <div className="flex gap-6 justify-center sm:justify-start mb-10">
+        {[{ label: "Undies" }, { label: "Shoes" }, { label: "New" }].map((h, i) => (
+          <div key={i} className="flex flex-col items-center">
+            <div className="w-16 h-16 rounded-full bg-gray-100 border border-gray-300" />
+            <span className="text-xs mt-1">{h.label}</span>
+          </div>
+        ))}
       </div>
+
+      {/* 5) Conditional grid */}
+      {isConsumerOwner ? (
+        <>
+          <h2 className="text-lg font-semibold mb-3">Your Orders</h2>
+          <div className="grid grid-cols-3 gap-[2px]">
+            {(orders ?? []).map((o) => {
+              const img = o.listings?.images?.[0] ?? "https://via.placeholder.com/400";
+              const shipped = o.status === "shipped";
+              return (
+                <Link
+                  key={o.id}
+                  href={`/purchase/${o.id}`}
+                  className="relative block bg-black group"
+                >
+                  <img
+                    src={img}
+                    alt={o.listings?.title ?? "Order"}
+                    className="w-full aspect-square object-cover opacity-95 group-hover:opacity-100 transition"
+                  />
+                  <span
+                    className={`absolute left-1.5 top-1.5 text-[10px] px-1.5 py-0.5 rounded-md
+                      ${shipped ? "bg-green-600 text-white" : "bg-yellow-500 text-black"}`}
+                  >
+                    {shipped ? "Shipped" : "To Ship"}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+          {!orders?.length && (
+            <p className="text-sm text-gray-500 mt-4">You don’t have any orders yet.</p>
+          )}
+        </>
+      ) : (
+        <div className="grid grid-cols-3 gap-[2px]">
+          {listings?.length ? (
+            listings.map((listing) => (
+              <Link key={listing.id} href={`/post/${listing.id}`} className="bg-black block hover:opacity-90 transition">
+                <img
+                  src={listing.images?.[0] ?? "https://via.placeholder.com/400"}
+                  alt={listing.title ?? "Listing image"}
+                  className="w-full aspect-square object-cover"
+                />
+              </Link>
+            ))
+          ) : (
+            <p className="col-span-3 text-center text-gray-500 text-sm mt-6">
+              This user hasn’t posted any listings yet.
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
