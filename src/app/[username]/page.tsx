@@ -6,17 +6,17 @@ import ProfileOwnerButtons from "@/components/ProfileOwnerButtons";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
-// This must come *after* imports
+// ✅ Must come *after* imports
 export const revalidate = 60;
 
-interface Props {
-  params: {
-    username: string;
-  };
-}
+// ✅ Correct PageProps type
+type PageProps = {
+  params: { username: string };
+};
 
-export default async function UserProfilePage({ params }: Props) {
+export default async function UserProfilePage({ params }: PageProps) {
   const supabase = createServerComponentClient<Database>({ cookies });
+
 
   // 1. Profile lookup
   const { data: profile, error } = await supabase
