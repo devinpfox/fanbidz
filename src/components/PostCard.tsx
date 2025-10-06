@@ -132,7 +132,7 @@ export default function PostCard({
           showViewAll={false}
         />
 
-        <div className="mt-3 grid grid-cols-[1fr_230px] gap-4 items-start">
+<div className="bg-white rounded-2xl shadow-md overflow-hidden">
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-[20px] sm:text-[22px] font-semibold leading-snug">{title}</h1>

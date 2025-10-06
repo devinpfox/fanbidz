@@ -220,7 +220,7 @@ export default async function PostPage({ params }: { params: { id: string } }) {
           />
 
           {/* 2-column layout */}
-          <div className="mt-3 grid grid-cols-[1fr_230px] gap-4 items-start">
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-[1fr_230px] gap-4 items-start">
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-[20px] sm:text-[22px] font-semibold leading-snug">

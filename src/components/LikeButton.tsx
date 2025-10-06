@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import type { Database } from "../../types/supabase";
+import { Heart } from "lucide-react";
 
 type Props = {
   listingId: string;
@@ -52,15 +53,19 @@ export default function LikeButton({ listingId, userId, hasLiked, likeCount }: P
 
   return (
     <button
-      type="button"
-      onClick={toggle}
-      disabled={pending}
-      className="inline-flex items-center gap-2 mt-3 select-none"
-      aria-pressed={liked}
-      title={liked ? "Unlike" : "Like"}
-    >
-      <span className={`text-lg ${liked ? "text-rose-600" : "text-gray-500"}`}>♥</span>
-      <span className="text-sm text-gray-600">{count}</span>
-    </button>
+    type="button"
+    onClick={toggle}
+    disabled={pending}
+    className="flex items-center gap-1 hover:text-black"
+    aria-pressed={liked}
+    title={liked ? "Unlike" : "Like"}
+  >
+    <Heart
+      className={`h-6 w-6 ${
+        liked ? "fill-rose-500 text-rose-500" : "text-gray-500"
+      }`}
+    />
+    <span className="text-sm text-gray-600">{count}</span>
+  </button>
   );
 }
