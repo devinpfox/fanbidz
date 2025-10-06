@@ -109,3 +109,7 @@ a:hover { filter: brightness(0.95); }
 .text-brand {
   color: var(--brand-pink) !important;
 }
+
+.engagement-row {
+padding-top: 2%;
+}

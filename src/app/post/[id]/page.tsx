@@ -208,7 +208,7 @@ export default async function PostPage({ params }: { params: { id: string } }) {
           <span className="h-1.5 w-1.5 rounded-full bg-black/20" />
         </div>
 
-        <div className="px-4 pb-5">
+        <div className="px-4 pb-5 engagement-row">
           <EngagementRow
             listingId={listing.id}
             currentUserId={currentUserId}
