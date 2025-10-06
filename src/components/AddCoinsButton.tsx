@@ -41,8 +41,8 @@ export default function AddCoinsButton({ initial = 10 }: { initial?: number }) {
               className={[
                 'rounded-2xl px-3 py-2 text-sm font-medium transition active:scale-95 border',
                 active
-                  ? 'bg-white text-black border-white'
-                  : 'bg-white/5 text-white hover:bg-white/10 border-white/15',
+                  ? 'bg-white text-black border-black'
+                  : 'bg-white/5 text-black hover:bg-white/10 border-black/15',
               ].join(' ')}
               aria-pressed={active}
             >
@@ -62,7 +62,7 @@ export default function AddCoinsButton({ initial = 10 }: { initial?: number }) {
             setCoins(Math.max(0, parseInt(e.target.value || '0', 10)))
           }
           inputMode="numeric"
-          className="flex-1 rounded-2xl border border-white/15 bg-black/30 px-4 py-3 text-base text-white placeholder-white/40 outline-none focus:border-white/30"
+          className="flex-1 rounded-2xl border border-black/15 bg-black/30 px-4 py-3 text-base text-black placeholder-white/40 outline-none focus:border-black/30"
           placeholder="Amount (coins)"
           aria-label="Amount in coins"
         />
@@ -70,13 +70,13 @@ export default function AddCoinsButton({ initial = 10 }: { initial?: number }) {
           type="button"
           onClick={startCheckout}
           disabled={loading || coins < 1}
-          className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 via-pink-500 to-rose-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-500/25 disabled:opacity-50"
+          className="inline-flex items-center text-white justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 via-pink-500 to-rose-500 px-4 py-3 text-sm font-semibold black shadow-lg shadow-rose-500/25 disabled:opacity-50"
         >
           {loading ? 'Redirecting…' : 'Add Coins'}
         </button>
       </div>
 
-      <p className="mt-2 text-xs text-white/60">
+      <p className="mt-2 text-xs text-black/60">
         Minimum deposit is 1 coin.
       </p>
     </div>

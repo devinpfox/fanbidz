@@ -35,32 +35,37 @@ export default function BuyNowButton({
   const [balance, setBalance] = useState<number>(initialBalance);
   const [msg, setMsg] = useState<string>("");
 
-  async function refreshBalance() {
-    if (!userId) return;
+  async function fetchBalance(): Promise<number> {
+    if (!userId) return 0;
     const { data, error } = await supabase
       .from('wallets')
       .select('balance')
       .eq('user_id', userId)
-      .single();
-    if (!error) setBalance(Number(data?.balance ?? 0));
+      .maybeSingle(); // avoids throw if row doesn't exist
+  
+    const b = Number(data?.balance ?? 0);
+    if (!error) setBalance(b); // keep UI in sync
+    return b;
   }
-
+  
   async function handleBuyNow() {
     if (!userId) { setMsg('Please log in to buy.'); return; }
     if (!buyNow || buyNow <= 0) { setMsg('This item has no Buy Now price.'); return; }
     if (!window.confirm(`Buy now for $${buyNow.toFixed(2)}?`)) return;
-
+  
     setLoading(true);
     setMsg('');
-
-    await refreshBalance();
-    if (balance < buyNow) {
+  
+    // Use the *fresh* value, not the state
+    const currentBalance = await fetchBalance();
+  
+    if (currentBalance < buyNow) {
       setMsg('❌ Not enough coins. Redirecting to wallet…');
       setTimeout(() => (window.location.href = '/wallet'), 800);
       setLoading(false);
       return;
     }
-
+  
     try {
       const res = await fetch('/api/buy-now', {
         method: 'POST',
@@ -68,7 +73,7 @@ export default function BuyNowButton({
         body: JSON.stringify({ listing_id: listingId }),
       });
       const data = await res.json();
-
+  
       if (!res.ok) {
         const e = String(data?.error || 'Failed to buy').toLowerCase();
         if (e.includes('insufficient')) {
@@ -82,7 +87,7 @@ export default function BuyNowButton({
         }
         return;
       }
-
+  
       const orderId: string | undefined = data?.order_id;
       if (orderId) {
         router.prefetch(`/purchase/${orderId}/shipping`);
@@ -96,11 +101,12 @@ export default function BuyNowButton({
       setLoading(false);
     }
   }
+  
 
   const base =
     variant === 'link'
       ? 'p-0 bg-transparent underline text-gray-700 hover:text-black disabled:text-gray-400'
-      : 'px-4 py-1.5 bg-emerald-600 text-white rounded-full text-sm font-semibold hover:bg-emerald-700 disabled:opacity-50';
+      : 'px-4 py-1.5 bg-black text-white rounded-full text-sm font-semibold hover:bg-emerald-700 disabled:opacity-50';
 
   const label = children ?? (buyNow ? `Buy Now — $${buyNow.toFixed(2)}` : 'Buy Now');
 

@@ -94,7 +94,7 @@ export default async function PurchaseDetailPage({ params }: { params: { id: str
               ) : (
                 <div className="flex items-center justify-between">
                   <span className="text-gray-500">No shipping address yet.</span>
-                  <Link href={`/purchase/${order.id}/shipping`} className="text-blue-600 underline">
+                  <Link href={`/purchase/${order.id}/shipping`} className="text-[rgb(255,78,207)] underline">
                     Add shipping info
                   </Link>
                 </div>

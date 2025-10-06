@@ -1,5 +1,4 @@
 // app/admin/page.tsx
-export const dynamic = "force-dynamic";
 
 import { cookies as nextCookies } from "next/headers";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
@@ -227,7 +226,7 @@ export default async function AdminPage({
           )}
         </div>
         <div className="px-4 py-3">
-          <Link href="/search?sort=top" className="text-blue-600">
+          <Link href="/search?sort=top" className="text-[rgb(255,78,207)]">
             Load more listings
           </Link>
         </div>

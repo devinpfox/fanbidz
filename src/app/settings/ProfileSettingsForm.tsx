@@ -57,7 +57,7 @@ export default function ProfileSettingsForm({ userId, initial }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <h2 className="text-xl font-bold text-pink-600">Profile Settings</h2>
+      <h2 className="text-xl font-bold text-[rgb(255,78,207)]">Profile Settings</h2>
 
       <input className="w-full border p-2" placeholder="Username"
         value={username} onChange={(e) => setUsername(e.target.value)} required />
@@ -79,7 +79,7 @@ export default function ProfileSettingsForm({ userId, initial }: Props) {
         <option value="creator">Creator</option>
       </select>
 
-      <button disabled={saving} className="w-full bg-pink-600 text-white p-2 rounded">
+      <button disabled={saving} className="w-full bg-[rgb(255,78,207)]text-white p-2 rounded">
         {saving ? "Saving..." : "Save Profile"}
       </button>
     </form>

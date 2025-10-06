@@ -1,4 +1,3 @@
-// app/post/[id]/page.tsx
 export const revalidate = 0;
 
 import { cookies, headers } from "next/headers";
@@ -10,7 +9,8 @@ import EngagementRow from "../../../components/EngagementRow";
 import PostRightCTA from "../../../components/PostRightCTA";
 import SaveButton from "../../../components/SaveButton";
 import CommentsLink from "../../../components/CommentsLink";
-
+import CountdownBadge from "../../../components/CountdownBadgeWrapper"; // ✅ not the original CountdownBadge
+import dynamic from "next/dynamic";
 
 type DB = GenDB & {
   public: GenDB["public"] & {
@@ -24,25 +24,6 @@ type DB = GenDB & {
   };
 };
 
-
-function formatTimeLeft(endAt: string): string {
-  const secondsLeft = Math.max(0, Math.floor((new Date(endAt).getTime() - Date.now()) / 1000));
-
-  if (secondsLeft < 60) {
-    return `${secondsLeft} sec${secondsLeft !== 1 ? "s" : ""}`;
-  } else if (secondsLeft < 3600) {
-    const mins = Math.floor(secondsLeft / 60);
-    return `${mins} min${mins !== 1 ? "s" : ""}`;
-  } else if (secondsLeft < 86400) {
-    const hrs = Math.floor(secondsLeft / 3600);
-    return `${hrs} hour${hrs !== 1 ? "s" : ""}`;
-  } else {
-    const days = Math.floor(secondsLeft / 86400);
-    return `${days} day${days !== 1 ? "s" : ""}`;
-  }
-}
-
-// Normalize a 1:1 relation
 function one<T>(v: T | T[] | null): T | null {
   if (!v) return null;
   return Array.isArray(v) ? v[0] ?? null : v;
@@ -194,7 +175,7 @@ export default async function PostPage({ params }: { params: { id: string } }) {
           </div>
           <button
             type="button"
-            className="px-3 py-1.5 text-sm font-medium rounded-full bg-blue-600 text-white hover:bg-blue-700 transition"
+            className="px-3 py-1.5 text-sm font-medium rounded-full bg-[rgb(255,78,207)] text-white hover:bg-blue-700 transition"
           >
             Follow
           </button>
@@ -204,12 +185,7 @@ export default async function PostPage({ params }: { params: { id: string } }) {
         <div className="relative mt-3">
           <img src={cover} alt={listing.title ?? "Listing image"} className="w-full object-cover aspect-square" />
 
-          {listing.end_at && (
-  <div className="absolute top-3 left-3 rounded-lg bg-white/95 px-3 py-1 text-xs font-semibold shadow-sm">
-    Expiring {formatTimeLeft(listing.end_at)}
-  </div>
-)}
-
+          {listing.end_at && <CountdownBadge endAt={listing.end_at} />}
 
           <div className="absolute top-3 right-3 flex items-center gap-2">
             <SaveButton
@@ -233,62 +209,52 @@ export default async function PostPage({ params }: { params: { id: string } }) {
         </div>
 
         <div className="px-4 pb-5">
-        <EngagementRow
-  listingId={listing.id}
-  currentUserId={currentUserId}
-  likeCount={likeCount}
-  commentCount={commentCount}
-  hasLiked={hasLiked}
-  initialSaved={initialSaved}
-  showViewAll={false}
-/>
+          <EngagementRow
+            listingId={listing.id}
+            currentUserId={currentUserId}
+            likeCount={likeCount}
+            commentCount={commentCount}
+            hasLiked={hasLiked}
+            initialSaved={initialSaved}
+            showViewAll={false}
+          />
 
-{/* Fixed 2-col row that does NOT stack on mobile */}
-<div className="mt-3 grid grid-cols-[1fr_230px] gap-4 items-start">
-  {/* LEFT */}
-  <div>
-    <div className="flex items-center gap-2">
-      <h1 className="text-[20px] sm:text-[22px] font-semibold leading-snug">
-        {listing.title}
-      </h1>
-      <span className="inline-flex items-center rounded-full bg-blue-600 text-white text-xs font-semibold px-2 py-0.5">
-        New
-      </span>
-    </div>
+          {/* 2-column layout */}
+          <div className="mt-3 grid grid-cols-[1fr_230px] gap-4 items-start">
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-[20px] sm:text-[22px] font-semibold leading-snug">
+                  {listing.title}
+                </h1>
+                <span className="inline-flex items-center rounded-full bg-[rgb(255,78,207)] text-white text-xs font-semibold px-2 py-0.5">
+                  New
+                </span>
+              </div>
 
-    {/* <p className="mt-1 text-[15px] text-gray-800">
-      {likeCount.toLocaleString()} Likes
-    </p> */}
+              <CommentsLink
+                listingId={listing.id}
+                currentUserId={currentUserId}
+                count={commentCount}
+                className="mt-1"
+              />
+            </div>
 
-    {/* client-side link to open comments (no server onClick) */}
-    <CommentsLink
-  listingId={listing.id}
-  currentUserId={currentUserId}   // <-- add this
-  count={commentCount}
-  className="mt-1"
-/>
-  </div>
+            <PostRightCTA
+              listingId={listing.id}
+              userId={currentUserId}
+              highestBid={highestBid?.amount ?? null}
+              buyNow={buyNow}
+              ended={disableBidding}
+              category="Sports Shoes"
+            />
+          </div>
 
-  {/* RIGHT (CTA) */}
-  <PostRightCTA
-    listingId={listing.id}
-    userId={currentUserId}
-    highestBid={highestBid?.amount != null ? Number(highestBid.amount) : null}
-    buyNow={buyNow}
-    ended={disableBidding}
-    category="Sports Shoes"
-  />
-</div>
-
-{/* Date directly under the 2-col row */}
-<div className="mt-3 flex items-center gap-2 text-sm text-gray-500">
-  <svg viewBox="0 0 24 24" className="h-5 w-5">
-    <path d="M7 3v2M17 3v2M3 8h18M5 11h14M5 15h10" fill="none" stroke="currentColor" strokeWidth="1.5" />
-  </svg>
-  {listing.date_posted ? new Date(listing.date_posted).toLocaleDateString() : ""}
-</div>
-
-
+          <div className="mt-3 flex items-center gap-2 text-sm text-gray-500">
+            <svg viewBox="0 0 24 24" className="h-5 w-5">
+              <path d="M7 3v2M17 3v2M3 8h18M5 11h14M5 15h10" fill="none" stroke="currentColor" strokeWidth="1.5" />
+            </svg>
+            {listing.date_posted ? new Date(listing.date_posted).toLocaleDateString() : ""}
+          </div>
         </div>
       </div>
     </div>

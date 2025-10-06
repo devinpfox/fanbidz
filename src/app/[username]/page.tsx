@@ -1,5 +1,4 @@
-// app/[username]/page.tsx
-export const revalidate = 0;
+export const revalidate = 60;
 
 import { cookies } from "next/headers";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
@@ -14,36 +13,58 @@ interface Props { params: { username: string } }
 export default async function UserProfilePage({ params }: Props) {
   const supabase = createServerComponentClient<Database>({ cookies });
 
-  // 1) Profile (include role so we can branch)
-  const { data: profile, error: profileError } = await supabase
+  // 1. Profile lookup
+  const { data: profile, error } = await supabase
     .from("profiles")
     .select("id, username, avatar, bio, website, display_name, full_name, role")
     .eq("username", params.username)
     .single();
 
-  if (!profile || profileError) return notFound();
+  if (!profile || error) return notFound();
 
-  // 2) Current user
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    id: profileId,
+    username,
+    avatar,
+    bio,
+    website,
+    display_name,
+    full_name,
+    role,
+  } = profile;
+
+  const displayName = display_name ?? full_name ?? `@${username}`;
+  const isConsumer = role === "consumer";
+
+  // 2. Current user
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   const currentUserId = session?.user?.id ?? null;
-  const isMe = currentUserId === profile.id;
-  const isConsumerOwner = isMe && (profile.role === "consumer"); // 👈 key flag
+  const isMe = currentUserId === profileId;
+  const isConsumerOwner = isMe && isConsumer;
 
-  // 3a) Creator listings (only needed when NOT consumer-owner)
-  let listings:
-    | Array<{ id: string; title: string | null; images: string[] | null; buy_now: number | null; created_at: string | null; last_bid: number | null; }>
-    | null = null;
+  // 3. Listings
+  let listings: {
+    id: string;
+    title: string | null;
+    images: string[] | null;
+    buy_now: number | null;
+    created_at: string | null;
+    last_bid: number | null;
+  }[] = [];
 
   if (!isConsumerOwner) {
     const listingsRes = await supabase
       .from("listings")
       .select("id, title, images, buy_now, created_at, last_bid")
-      .eq("user_id", profile.id)
+      .eq("user_id", profileId)
       .order("created_at", { ascending: false });
+
     listings = listingsRes.data ?? [];
   }
 
-  // 3b) Buyer orders (only needed when consumer-owner)
+  // 4. Orders (if consumer + self)
   let orders:
     | Array<{
         id: string;
@@ -61,39 +82,36 @@ export default async function UserProfilePage({ params }: Props) {
         id, status, created_at, price,
         listings:listing_id ( title, images )
       `)
-      .eq("buyer_id", profile.id)
+      .eq("buyer_id", profileId)
       .order("created_at", { ascending: false });
     orders = ordersRes.data ?? [];
   }
 
-  // 4) Follow counts (unchanged)
+  // 5. Follow counts
   const [followerRes, followingRes] = await Promise.all([
-    supabase.from("follows").select("*", { count: "exact", head: true }).eq("following_id", profile.id),
-    supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", profile.id),
+    supabase.from("follows").select("*", { count: "exact", head: true }).eq("following_id", profileId),
+    supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", profileId),
   ]);
   const followerCount = followerRes?.count ?? 0;
   const followingCount = followingRes?.count ?? 0;
 
-  const displayName = profile.display_name ?? profile.full_name ?? `@${profile.username}`;
-  const websiteHref = profile.website
-    ? (profile.website.startsWith("http") ? profile.website : `https://${profile.website}`)
-    : null;
+  const websiteHref = website?.startsWith("http") ? website : website ? `https://${website}` : null;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 bg-white min-h-screen">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8 mb-8">
         <img
-          src={profile.avatar ?? "https://i.pravatar.cc/150"}
+          src={avatar ?? "https://i.pravatar.cc/150"}
           alt="Avatar"
           className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover border"
         />
         <div className="flex-1 w-full">
           <div className="flex items-center gap-4 justify-center sm:justify-start">
             <h1 className="text-2xl font-semibold">{displayName}</h1>
-            {!isMe && currentUserId && <FollowButton profileId={profile.id} />}
+            {!isMe && currentUserId && <FollowButton profileId={profileId} />}
           </div>
-          <p className="text-sm text-gray-600 text-center sm:text-left">@{profile.username}</p>
+          <p className="text-sm text-gray-600 text-center sm:text-left">@{username}</p>
 
           <div className="flex justify-center sm:justify-start gap-8 mt-2 text-sm text-gray-600">
             <span><strong>{listings?.length || 0}</strong> posts</span>
@@ -101,27 +119,25 @@ export default async function UserProfilePage({ params }: Props) {
             <span><strong>{followingCount}</strong> following</span>
           </div>
 
-          {/* Owner actions */}
-          {isMe && <ProfileOwnerButtons username={profile.username} />}
+          {isMe && <ProfileOwnerButtons username={username} />}
 
-          {/* Bio + Website */}
           <div className="mt-4 text-sm leading-snug text-center sm:text-left space-y-1">
-            {profile.bio ? <p>{profile.bio}</p> : <p className="text-gray-400">No bio yet.</p>}
+            {bio ? <p>{bio}</p> : <p className="text-gray-400">No bio yet.</p>}
             {websiteHref && (
               <a
                 href={websiteHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 underline break-all"
+                className="text-[rgb(255,78,207)] underline break-all"
               >
-                {profile.website}
+                {website}
               </a>
             )}
           </div>
         </div>
       </div>
 
-      {/* Highlights (placeholder) */}
+      {/* Highlights (optional placeholder) */}
       <div className="flex gap-6 justify-center sm:justify-start mb-10">
         {[{ label: "Undies" }, { label: "Shoes" }, { label: "New" }].map((h, i) => (
           <div key={i} className="flex flex-col items-center">
@@ -131,7 +147,7 @@ export default async function UserProfilePage({ params }: Props) {
         ))}
       </div>
 
-      {/* 5) Conditional grid */}
+      {/* Content */}
       {isConsumerOwner ? (
         <>
           <h2 className="text-lg font-semibold mb-3">Your Orders</h2>
@@ -152,7 +168,7 @@ export default async function UserProfilePage({ params }: Props) {
                   />
                   <span
                     className={`absolute left-1.5 top-1.5 text-[10px] px-1.5 py-0.5 rounded-md
-                      ${shipped ? "bg-green-600 text-white" : "bg-yellow-500 text-black"}`}
+                    ${shipped ? "bg-green-600 text-white" : "bg-yellow-500 text-black"}`}
                   >
                     {shipped ? "Shipped" : "To Ship"}
                   </span>
@@ -168,7 +184,11 @@ export default async function UserProfilePage({ params }: Props) {
         <div className="grid grid-cols-3 gap-[2px]">
           {listings?.length ? (
             listings.map((listing) => (
-              <Link key={listing.id} href={`/post/${listing.id}`} className="bg-black block hover:opacity-90 transition">
+              <Link
+                key={listing.id}
+                href={`/post/${listing.id}`}
+                className="bg-black block hover:opacity-90 transition"
+              >
                 <img
                   src={listing.images?.[0] ?? "https://via.placeholder.com/400"}
                   alt={listing.title ?? "Listing image"}

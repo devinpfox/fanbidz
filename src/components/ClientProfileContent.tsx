@@ -141,7 +141,7 @@ export default function ClientProfileContent({
                   <>
                     <button
                       onClick={handleSave}
-                      className="bg-pink-600 text-white px-4 py-1 rounded hover:bg-pink-700"
+                      className="bg-[rgb(255,78,207)] text-white px-4 py-1 rounded hover:bg-pink-700"
                       disabled={saving}
                     >
                       {saving ? "Saving..." : "Save"}

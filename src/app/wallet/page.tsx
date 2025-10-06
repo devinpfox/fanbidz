@@ -1,11 +1,11 @@
 // app/(app)/wallet/page.tsx
-export const dynamic = 'force-dynamic';
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { Database } from '../../../types/supabase';
 import AddCoinsButton from '@/components/AddCoinsButton';
+import Image from 'next/image';
 
 export default async function WalletPage() {
   // cookies() is sync in App Router
@@ -29,38 +29,51 @@ export default async function WalletPage() {
   const formatted = new Intl.NumberFormat('en-US').format(balance);
 
   return (
-    <main className="min-h-[100svh] bg-gradient-to-b from-neutral-900 via-neutral-950 to-black text-white">
+    <main className="min-h-screen bg-white text-black">
       <div className="mx-auto w-full max-w-md px-4 pb-20 pt-10">
-        {/* Top bar */}
-        <header className="mb-6">
-          <h1 className="text-2xl font-semibold tracking-tight">Wallet</h1>
-          <p className="mt-1 text-sm text-white/60">
-            Add coins for purchases and tips.
-          </p>
+        {/* Top bar with logo */}
+        <header className="mb-6 flex items-center gap-3">
+          <Image
+            src="/fanbids-logo.svg" // place file at /public/fanbids-logo.png
+            alt="Fanbids Logo"
+            width={120}
+            height={36}
+            priority
+            className="h-9 w-auto"
+          />
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Wallet</h1>
+            <p className="mt-1 text-sm text-black/60">
+              Add coins for purchases and tips.
+            </p>
+          </div>
         </header>
 
         {/* Balance card */}
         <section className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-md shadow-xl">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-white/60">Current balance</p>
+              <p className="text-sm text-black/60">Current balance</p>
               <div className="mt-1 flex items-baseline gap-2">
                 <span className="text-4xl font-bold leading-none tracking-tight">
                   {formatted}
                 </span>
-                <span className="text-lg text-white/70">coins</span>
+                <span className="text-lg text-black/70">coins</span>
               </div>
             </div>
-            <span className="rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500/90 px-3 py-1.5 text-xs font-semibold shadow-lg shadow-emerald-500/20">
+            <span className="rounded-xl bg-gradient-to-br text-white from-[rgb(255,78,207)] to-purple-500 px-3 py-1.5 text-xs font-semibold shadow-lg shadow-[rgba(255,78,207,0.25)]">
               1 coin = $1
             </span>
           </div>
 
           <div className="mt-5">
+            {/* If AddCoinsButton accepts className, you can pass brand colors:
+                <AddCoinsButton className="bg-[rgb(255,78,207)] hover:bg-purple-500 text-white" />
+               Otherwise leave as-is: */}
             <AddCoinsButton />
           </div>
 
-          <p className="mt-3 text-xs text-white/60">
+          <p className="mt-3 text-xs text-black/60">
             Deposits are processed securely. Funds are available right after
             checkout.
           </p>
@@ -73,9 +86,9 @@ export default async function WalletPage() {
             <li className="flex items-center justify-between py-3">
               <div className="flex flex-col">
                 <span className="text-sm">Welcome bonus</span>
-                <span className="text-xs text-white/60">—</span>
+                <span className="text-xs text-black/60">—</span>
               </div>
-              <span className="text-sm font-medium text-emerald-400">
+              <span className="text-sm font-medium text-[rgb(255,78,207)]">
                 +0
               </span>
             </li>

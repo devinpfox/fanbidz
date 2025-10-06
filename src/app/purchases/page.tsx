@@ -1,5 +1,4 @@
 // app/purchases/page.tsx
-export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { cookies as nextCookies } from "next/headers";

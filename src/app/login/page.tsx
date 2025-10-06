@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import Image from "next/image";
 
 export default function LoginPage() {
   const supabase = useSupabaseClient();
@@ -105,22 +106,19 @@ emailToUse = rpcEmail as string;
         className="w-full max-w-sm p-8 bg-white rounded-xl shadow space-y-6"
         autoComplete="off"
       >
-        {/* Logo */}
-        <div className="flex justify-center">
-          <span className="text-5xl font-extrabold select-none">
-            <span
-              className="bg-gradient-to-r from-pink-600 to-purple-500 text-transparent bg-clip-text"
-              style={{ fontFamily: "sans-serif" }}
-            >
-              Only
-            </span>
-            <span className="text-gray-800">Bidz</span>
-          </span>
-        </div>
-  
+      {/* Logo */}
+<div className="flex justify-center">
+  <Image
+    src="/fanbids-logo.svg"   // place file at /public/fanbids-logo.png
+    alt="Fanbids Logo"
+    width={200}
+    height={60}
+    priority
+  />
+</div>
         {/* Inputs */}
         <input
-          className="w-full border border-gray-300 rounded px-4 py-3 text-lg focus:outline-pink-600"
+          className="w-full border border-gray-300 rounded px-4 py-3 text-lg focus:outline-[rgb(255,78,207)]"
           placeholder="Phone number, email or username"
           value={identifier}
           onChange={(e) => setIdentifier(e.target.value)}
@@ -129,7 +127,7 @@ emailToUse = rpcEmail as string;
         />
         <div className="relative">
           <input
-            className="w-full border border-gray-300 rounded px-4 py-3 text-lg pr-12 focus:outline-pink-600"
+            className="w-full border border-gray-300 rounded px-4 py-3 text-lg pr-12 focus:outline-[rgb(255,78,207)]"
             placeholder="Password"
             type={showPassword ? "text" : "password"}
             value={password}
@@ -166,12 +164,12 @@ emailToUse = rpcEmail as string;
   
         {/* Already have an account */}
         <div className="text-center text-gray-400 text-base">
-          Already have an account?{" "}
+          Don't have an account yet?{" "}
           <span
             className="text-black font-medium cursor-pointer"
             onClick={() => router.push("/signup")}
           >
-            Sign in
+            Sign Up
           </span>
         </div>
   
@@ -185,7 +183,7 @@ emailToUse = rpcEmail as string;
         {/* Facebook Sign Up */}
         <button
           type="button"
-          className="w-full flex items-center justify-center gap-3 py-3 rounded bg-blue-600 hover:bg-blue-700 text-white text-lg font-medium"
+          className="w-full flex items-center justify-center gap-3 py-3 rounded bg-[rgb(255,78,207)] hover:bg-blue-700 text-white text-lg font-medium"
         >
           <svg
             width={22}

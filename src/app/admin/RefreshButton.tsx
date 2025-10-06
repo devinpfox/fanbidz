@@ -10,7 +10,7 @@ export default function RefreshButton() {
   return (
     <button
       type="button"
-      className="text-sm text-blue-600"
+      className="text-sm text-[rgb(255,78,207)]"
       onClick={() => router.replace(qs ? `/admin?${qs}` : "/admin")}
     >
       Refresh

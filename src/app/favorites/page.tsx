@@ -19,7 +19,7 @@ type DB = GenDB & {
   };
 };
 
-// ---- ADD THIS HELPER + TYPE ----
+// ---- Listing types ----
 type Listing = { id: string; title: string | null; images: string[] | null };
 type FavRow = { listing_id: string; created_at: string; listings: Listing | Listing[] | null };
 
@@ -27,7 +27,7 @@ function toListing(l: FavRow["listings"]): Listing | null {
   if (!l) return null;
   return Array.isArray(l) ? l[0] ?? null : l;
 }
-// --------------------------------
+// ------------------------
 
 export default async function FavoritesPage() {
   const cookieStore = await nextCookies();
@@ -36,7 +36,16 @@ export default async function FavoritesPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const userId = user?.id ?? null;
+
+  // ⛔ If not logged in
+  if (!userId) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        <p className="text-sm text-gray-500">Please sign in to view your saved items.</p>
+      </div>
+    );
+  }
 
   const { data, error } = await supabase
     .from("saves")
@@ -45,10 +54,9 @@ export default async function FavoritesPage() {
       created_at,
       listings:listing_id ( id, title, images )
     `)
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
-  // cast into FavRow so TS knows about our shim
   const rows = ((data ?? []) as FavRow[]).filter((r) => r.listings);
 
   return (
@@ -64,6 +72,7 @@ export default async function FavoritesPage() {
           {rows.map((r) => {
             const listing = toListing(r.listings);
             if (!listing) return null;
+
             return (
               <Link
                 key={r.listing_id}

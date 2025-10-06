@@ -41,7 +41,7 @@ export default function PostRightCTA({
             buyNow={buyNow}
             userId={userId}
             ended={ended}
-            className="p-0 bg-transparent underline underline-offset-2 text-[18px] text-gray-400 hover:text-gray-600 disabled:text-gray-300"
+            className="p-0 bg-black underline underline-offset-2 text-[15px] text-gray-400 hover:text-gray-600 disabled:text-gray-300"
           >
             Buy Now {buyNowText}
           </BuyNowButton>
@@ -53,7 +53,7 @@ export default function PostRightCTA({
           type="button"
           disabled={!userId || ended}
           onClick={() => setOpen(true)}
-          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 text-white text-base font-semibold shadow-sm disabled:opacity-50 w-[140px]"
+          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[rgb(255,78,207)] px-6 py-3 text-white text-base font-semibold shadow-sm disabled:opacity-50 w-[140px]"
         >
           Bid <span aria-hidden>→</span>
         </button>

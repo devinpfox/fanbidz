@@ -46,7 +46,7 @@ export default function ProfileGuard({ children, requiredRole }: { children: Rea
   if (checking) {
     return (
       <div className="w-full flex flex-col items-center justify-center p-12">
-        <span className="text-pink-600 font-semibold">Checking your profile...</span>
+        <span className="text-[rgb(255,78,207)] font-semibold">Checking your profile...</span>
       </div>
     );
   }

@@ -86,7 +86,7 @@ export default function ListingCard({
           <span className="text-sm text-gray-600">
             💰 Last bid: ${listing.last_bid?.toFixed(2) ?? "0.00"}
           </span>
-          <button className="px-4 py-1.5 bg-blue-600 text-white rounded-full text-sm font-semibold hover:bg-blue-700">
+          <button className="px-4 py-1.5 bg-[rgb(255,78,207)] text-white rounded-full text-sm font-semibold hover:bg-blue-700">
             Place Bid →
           </button>
         </div>

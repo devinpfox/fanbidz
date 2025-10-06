@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+
 
 import { cookies as nextCookies } from "next/headers";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";

@@ -55,21 +55,21 @@ export type Database = {
       }
       comments: {
         Row: {
-          created_at: string | null
+          created_at: string
           id: string
           listing_id: string | null
           text: string | null
           user_id: string | null
         }
         Insert: {
-          created_at?: string | null
+          created_at?: string
           id?: string
           listing_id?: string | null
           text?: string | null
           user_id?: string | null
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
           id?: string
           listing_id?: string | null
           text?: string | null
@@ -309,7 +309,12 @@ export type Database = {
           shipped_at: string | null
           shipping: Json | null
           status: string
+          tracker_id: string | null
+          tracking_carrier: string | null
+          tracking_estimated: string | null
+          tracking_last_event: Json | null
           tracking_number: string | null
+          tracking_status: string | null
         }
         Insert: {
           buyer_id: string
@@ -322,7 +327,12 @@ export type Database = {
           shipped_at?: string | null
           shipping?: Json | null
           status?: string
+          tracker_id?: string | null
+          tracking_carrier?: string | null
+          tracking_estimated?: string | null
+          tracking_last_event?: Json | null
           tracking_number?: string | null
+          tracking_status?: string | null
         }
         Update: {
           buyer_id?: string
@@ -335,7 +345,12 @@ export type Database = {
           shipped_at?: string | null
           shipping?: Json | null
           status?: string
+          tracker_id?: string | null
+          tracking_carrier?: string | null
+          tracking_estimated?: string | null
+          tracking_last_event?: Json | null
           tracking_number?: string | null
+          tracking_status?: string | null
         }
         Relationships: [
           {
@@ -420,6 +435,35 @@ export type Database = {
           website?: string | null
         }
         Relationships: []
+      }
+      saves: {
+        Row: {
+          created_at: string
+          id: string
+          listing_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          listing_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          listing_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saves_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       transactions: {
         Row: {

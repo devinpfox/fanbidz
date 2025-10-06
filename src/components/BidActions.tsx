@@ -111,7 +111,7 @@ export default function BidActions({
       <button
         onClick={handleBid}
         disabled={ended || loading}
-        className="px-4 py-1.5 bg-blue-600 text-white rounded-full text-sm font-semibold hover:bg-blue-700 disabled:opacity-50"
+        className="px-4 py-1.5 bg-[rgb(255,78,207)] text-white rounded-full text-sm font-semibold hover:bg-blue-700 disabled:opacity-50"
       >
         {ended ? "Ended" : loading ? "Bidding..." : "Bid →"}
       </button>

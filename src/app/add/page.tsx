@@ -250,7 +250,7 @@ console.log("Full data returned:", data);           // 🔍 see the full respons
             </button>
             <button
               type="submit"
-              className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700"
+              className="flex-1 bg-[rgb(255,78,207)] text-white py-3 rounded-lg font-semibold hover:bg-blue-700"
             >
               Publish Now
             </button>

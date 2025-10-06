@@ -1,26 +1,14 @@
-// app/page.tsx
-export const revalidate = 0;
-
 import { cookies as nextCookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import type { Database as GenDB } from "../../types/supabase";
 import PostCard from "../components/PostCard";
 
-/* -------- DB shim so .from("saves") type-checks -------- */
-type DB = GenDB & {
-  public: GenDB["public"] & {
-    Tables: GenDB["public"]["Tables"] & {
-      saves: {
-        Row: { id?: string; listing_id: string; user_id: string; created_at?: string };
-        Insert: { listing_id: string; user_id: string; created_at?: string };
-        Update: { listing_id?: string; user_id?: string; created_at?: string };
-      };
-    };
-  };
-};
+/** Revalidate every 5 seconds */
+export const revalidate = 5;
 
-/* ---------- helpers & types ---------- */
+/* ---------- Types ---------- */
+type DB = GenDB;
 type Profile = { username: string | null; avatar: string | null };
 type Listing = {
   id: string;
@@ -30,6 +18,7 @@ type Listing = {
   last_bid: number | null;
   seconds_left: number | null;
   created_at: string;
+  end_at: string | null;
   user_id: string;
   profiles: Profile | Profile[] | null;
 };
@@ -40,88 +29,79 @@ function one<T>(v: T | T[] | null): T | null {
   return Array.isArray(v) ? v[0] ?? null : v;
 }
 
-/* --------------- page ---------------- */
+const PAGE_SIZE = 6;
+
 export default async function HomePage() {
-  const cookieStore = await nextCookies();
+  const cookieStore = nextCookies();
   const supabase = createServerComponentClient<DB>({ cookies: () => cookieStore as any });
 
   // Auth
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-  const userId = user.id;
+  const userId = user?.id ?? null;
 
-  // Wallet
-  const { data: w } = await supabase
-    .from("wallets")
-    .select("balance")
-    .eq("user_id", userId)
-    .single();
-  const walletBalance = Number(w?.balance ?? 0);
-
-  // Listings with creator
+  // Listings (paged)
   const { data: listRows, error } = await supabase
-    .from("listings")
-    .select(`
-      id,
-      title,
-      images,
-      buy_now,
-      last_bid,
-      seconds_left,
-      created_at,
-      user_id,
-      profiles:profiles!user_id (
-        username,
-        avatar
-      )
-    `)
-    .eq("sold", false)
-    .order("created_at", { ascending: false });
+  .from("listings")
+  .select(`
+    id,
+    title,
+    images,
+    buy_now,
+    last_bid,
+    seconds_left,
+    created_at,
+    end_at,
+    profiles:profiles!user_id ( username, avatar )
+  `)
+  .eq("sold", false)
+  .order("created_at", { ascending: false })  // 👈 fix here
+  .limit(PAGE_SIZE);
+
 
   if (error) {
     return <div className="p-6 text-red-500">Failed to load listings</div>;
   }
-  const listings = (listRows ?? []) as Listing[];
 
-  // Aggregate counts + my like/save flags (typed)
-  const [likesAll, commentsAll, likesMine, savesMine] = await Promise.all([
-    supabase.from("likes").select("listing_id").returns<IdRow[]>(),
-    supabase.from("comments").select("listing_id").returns<IdRow[]>(),
-    supabase.from("likes").select("listing_id").eq("user_id", userId).returns<IdRow[]>(),
-    supabase.from("saves").select("listing_id").eq("user_id", userId).returns<IdRow[]>(),
-  ]).then(([a, b, c, d]) => [a.data ?? [], b.data ?? [], c.data ?? [], d.data ?? []]);
+  const listings = (listRows ?? []) as Listing[];
+  const ids = listings.map((l) => l.id);
+
+  if (ids.length === 0) {
+    return <div className="max-w-3xl mx-auto px-4 py-6 sm:py-8">No listings yet.</div>;
+  }
+
+  // Aggregate counts
+  const [likesAllRes, commentsAllRes] = await Promise.all([
+    supabase.from("likes").select("listing_id").in("listing_id", ids).returns<IdRow[]>(),
+    supabase.from("comments").select("listing_id").in("listing_id", ids).returns<IdRow[]>(),
+  ]);
+
+  const likesAll = likesAllRes.data ?? [];
+  const commentsAll = commentsAllRes.data ?? [];
 
   const likeCountMap = new Map<string, number>();
-  for (const row of likesAll) {
-    const id = row.listing_id;
-    if (!id) continue;
-    likeCountMap.set(id, (likeCountMap.get(id) || 0) + 1);
-  }
-
   const commentCountMap = new Map<string, number>();
-  for (const row of commentsAll) {
-    const id = row.listing_id;
-    if (!id) continue;
-    commentCountMap.set(id, (commentCountMap.get(id) || 0) + 1);
+
+  for (const row of likesAll) {
+    if (row.listing_id) {
+      likeCountMap.set(row.listing_id, (likeCountMap.get(row.listing_id) || 0) + 1);
+    }
   }
 
-  const likedSet = new Set<string>(likesMine.map((r) => r.listing_id!).filter(Boolean));
-  const savedSet = new Set<string>(savesMine.map((r) => r.listing_id!).filter(Boolean));
+  for (const row of commentsAll) {
+    if (row.listing_id) {
+      commentCountMap.set(row.listing_id, (commentCountMap.get(row.listing_id) || 0) + 1);
+    }
+  }
 
-  // Render the SAME card layout as /post/[id]
+  const likedSet = new Set<string>();  // hydrated client-side
+  const savedSet = new Set<string>();  // hydrated client-side
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 sm:py-8 space-y-6">
       {listings.map((listing) => {
         const profile = one(listing.profiles);
-        const highestBid = typeof listing.last_bid === "number" ? Number(listing.last_bid) : null;
-        const buyNow = typeof listing.buy_now === "number" ? Number(listing.buy_now) : null;
-
-        const endAt =
-          listing.seconds_left != null
-            ? new Date(Date.now() + listing.seconds_left * 1000).toISOString()
-            : null;
 
         return (
           <PostCard
@@ -131,7 +111,7 @@ export default async function HomePage() {
             title={listing.title}
             datePosted={listing.created_at}
             category="Sports Shoes"
-            endAt={endAt}
+            endAt={listing.end_at}
             sold={false}
             profile={profile}
             currentUserId={userId}
@@ -139,9 +119,8 @@ export default async function HomePage() {
             commentCount={commentCountMap.get(listing.id) ?? 0}
             hasLiked={likedSet.has(listing.id)}
             initialSaved={savedSet.has(listing.id)}
-            highestBid={highestBid}
-            buyNow={buyNow}
-            walletBalance={walletBalance}
+            highestBid={listing.last_bid ?? null}
+            buyNow={listing.buy_now ?? null}
             showDots
             showHeaderFollow
           />

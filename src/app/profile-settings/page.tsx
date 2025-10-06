@@ -205,7 +205,7 @@ export default function ProfileSettingsPage() {
             <button
               type="submit"
               disabled={saving}
-              className="text-blue-600 font-semibold disabled:opacity-50"
+              className="text-[rgb(255,78,207)] font-semibold disabled:opacity-50"
             >
               {saving ? "Saving…" : "Save"}
             </button>
@@ -319,7 +319,7 @@ export default function ProfileSettingsPage() {
           <button
             type="submit"
             disabled={saving}
-            className="w-full h-12 rounded-xl bg-blue-600 text-white font-semibold disabled:opacity-50"
+            className="w-full h-12 rounded-xl bg-[rgb(255,78,207)] text-white font-semibold disabled:opacity-50"
           >
             Continue
           </button>

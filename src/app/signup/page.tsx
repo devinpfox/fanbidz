@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState} from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -35,20 +36,18 @@ export default function SignUpPage() {
       >
         {/* Logo */}
         <div className="flex justify-center">
-          <span className="text-5xl font-extrabold select-none">
-            <span
-              className="bg-gradient-to-r from-pink-600 to-purple-500 text-transparent bg-clip-text"
-              style={{ fontFamily: "sans-serif" }}
-            >
-              Only
-            </span>
-            <span className="text-gray-800">Bidz</span>
-          </span>
-        </div>
+  <Image
+    src="../fanbids-logo.svg" // make sure this file is located at /public/images/fanbids-logo.png
+    alt="Fanbids Logo"
+    width={200}
+    height={60}
+    priority
+  />
+</div>   
 
         {/* Inputs */}
         <input
-          className="w-full border border-gray-300 rounded px-4 py-3 text-lg focus:outline-pink-600"
+          className="w-full border border-gray-300 rounded px-4 py-3 text-lg focus:outline-[rgb(255,78,207)]"
           placeholder="Email"
           type="email"
           value={email}
@@ -57,7 +56,7 @@ export default function SignUpPage() {
         />
         <div className="relative">
           <input
-            className="w-full border border-gray-300 rounded px-4 py-3 text-lg pr-12 focus:outline-pink-600"
+            className="w-full border border-gray-300 rounded px-4 py-3 text-lg pr-12 focus:outline-[rgb(255,78,207)]"
             placeholder="Password"
             type={showPassword ? "text" : "password"}
             value={password}
@@ -85,7 +84,7 @@ export default function SignUpPage() {
 
         {/* Sign Up Button */}
         <button
-          className="w-full bg-pink-600 text-white py-3 rounded text-lg font-semibold"
+          className="w-full bg-[rgb(255,78,207)] text-white py-3 rounded text-lg font-semibold"
           type="submit"
         >
           Sign Up
@@ -112,7 +111,7 @@ export default function SignUpPage() {
         {/* Facebook Sign Up */}
         <button
           type="button"
-          className="w-full flex items-center justify-center gap-3 py-3 rounded bg-blue-600 hover:bg-blue-700 text-white text-lg font-medium"
+          className="w-full flex items-center justify-center gap-3 py-3 rounded bg-[rgb(255,78,207)] hover:bg-blue-700 text-white text-lg font-medium"
         >
           <svg width={22} height={22} viewBox="0 0 24 24" fill="white">
             <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 6.019 4.438 10.987 10.125 11.854v-8.385h-3.047v-3.469h3.047v-2.64c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953h-1.513c-1.491 0-1.953.926-1.953 1.874v2.247h3.328l-.532 3.469h-2.796v8.385c5.688-.867 10.125-5.835 10.125-11.854z" />
