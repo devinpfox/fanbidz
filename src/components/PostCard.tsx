@@ -121,7 +121,7 @@ export default function PostCard({
         </div>
       </div>
 
-      <div className="px-4 pb-5">
+      <div className="px-4 pb-5 engagement-row">
         <EngagementRow
           listingId={listingId}
           currentUserId={currentUserId}
