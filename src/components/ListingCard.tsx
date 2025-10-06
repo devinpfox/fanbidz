@@ -1,8 +1,7 @@
 "use client";
 import { useState } from "react";
-import LiveCountdown from "./LiveCountdown"; // adjust if needed
+import LiveCountdown from "./LiveCountdown";
 
-// --- Type for a single listing
 type Listing = {
   id: string;
   title: string;
@@ -40,7 +39,7 @@ export default function ListingCard({
   };
 
   return (
-    <div className="mb-10 bg-white rounded-lg shadow">
+    <div className="mb-10 bg-white rounded-lg shadow w-full max-w-full overflow-hidden">
       <div className="relative w-full">
         <img
           src={listing.image ?? "https://via.placeholder.com/400x300"}
