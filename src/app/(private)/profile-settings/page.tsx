@@ -236,7 +236,10 @@ if (profile) {
       // Mark profile as complete
       setIsProfileComplete(true);
 
-      // Successfully saved
+      // ✅ Refresh to update AuthContext with new profile data
+      router.refresh();
+
+      // Successfully saved - navigate after refresh completes
       router.push("/");
     } catch (err: any) {
       console.error("Error saving profile:", err);
