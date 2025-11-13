@@ -23,7 +23,7 @@ export default function OrderChat({
   meId: string;
   otherId: string;
 }) {
-  const supabase = createClientComponentClient<Database>();
+  const supabase = createClientComponentClient<Database["public"]>();
 
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [text, setText] = useState("");

@@ -2,7 +2,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import type { Database } from "../../../../types/supabase";
+import type { Database } from "@/types/supabase";
 import WalletBadge from "@/components/WalletBadge";
 import AddCoinsButton from "@/components/AddCoinsButton";
 import ProfileSettingsForm from "./ProfileSettingsForm";

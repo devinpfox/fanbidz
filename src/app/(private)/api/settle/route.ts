@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { createClient } from "@supabase/supabase-js";
-import type { Database, Json, TablesInsert } from "../../../../../types/supabase";
+import type { Database, Json, TablesInsert } from "@/types/supabase";
 
 type PublicSchema = Database["public"];
 type TransactionInsert = TablesInsert<"transactions">;

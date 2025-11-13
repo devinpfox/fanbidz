@@ -13,7 +13,7 @@ export default function ProfileGuard({
   requiredRole?: string;
 }) {
   const router = useRouter();
-  const supabase = useSupabaseClient<Database>();
+  const supabase = useSupabaseClient<Database["public"]>();
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {

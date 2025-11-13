@@ -1,40 +1,40 @@
 // app/(private)/page.tsx
 import { cookies as nextCookies } from "next/headers";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import type { Database as GenDB } from "../../../types/supabase";
+import type { Database } from "../../../types/supabase"; // ← Full Database
 import PostCard from "../../components/PostCard.client";
 import HomePageClient from "./HomePageClient";
 
 export const revalidate = 120;
 
-type DB = GenDB;
+// Use the generated helper types!
+type ProfilesRow = Database["public"]["Tables"]["profiles"]["Row"];
+type ListingsRow = Database["public"]["Tables"]["listings"]["Row"];
+type LikesRow = Database["public"]["Tables"]["likes"]["Row"];
+type CommentsRow = Database["public"]["Tables"]["comments"]["Row"];
+type SavesRow = Database["public"]["Tables"]["saves"]["Row"];
 
-type Profile = { username: string | null; avatar: string | null };
-type Listing = {
-  id: string;
-  title: string | null;
-  images: string[] | null;
-  buy_now: number | null;
-  last_bid: number | null;
-  seconds_left: number | null;
-  created_at: string;
-  end_at: string | null;
-  user_id: string;
-  profiles: Profile | Profile[] | null;
+// Select only what we need
+type ProfileSelect = Pick<ProfilesRow, "username" | "avatar">;
+type FirstTimeProfile = Pick<ProfilesRow, "first_time" | "role">;
+
+type ListingWithProfile = ListingsRow & {
+  profiles: ProfileSelect | ProfileSelect[] | null;
 };
-type IdRow = { listing_id: string | null };
+
+type ListingIdRow = { listing_id: string | null | undefined };
+
+const PAGE_SIZE = 6;
 
 function one<T>(v: T | T[] | null): T | null {
   if (!v) return null;
   return Array.isArray(v) ? v[0] ?? null : v;
 }
 
-const PAGE_SIZE = 6;
-
 export default async function HomePage() {
   const cookieStore = await nextCookies();
-  const supabase = createServerComponentClient<DB>({
-    cookies: () => cookieStore as any,
+  const supabase = createServerComponentClient<Database>({
+    cookies: () => cookieStore,
   });
 
   // ---- Auth ----
@@ -43,19 +43,18 @@ export default async function HomePage() {
   } = await supabase.auth.getUser();
   const userId = user?.id ?? null;
 
-  // ---- First Time Flow ----
+  // ---- First Time Flow (NOW TYPE-SAFE!) ----
   let showTutorial = false;
+
   if (userId) {
     const { data: profile } = await supabase
-      .from("profiles")
-      .select("first_time, role")
-      .eq("id", userId)
-      .single();
-
-    showTutorial = profile?.first_time === true && profile?.role === "consumer";
+    .from("profiles")
+    .select("first_time, role")
+    .eq("id", userId)
+    .single<FirstTimeProfile>();
   }
 
-  // ---- Listings ----
+  // ---- Listings with Profile Join ----
   const { data: listRows, error } = await supabase
     .from("listings")
     .select(`
@@ -67,11 +66,12 @@ export default async function HomePage() {
       seconds_left,
       created_at,
       end_at,
-      profiles:profiles!user_id ( username, avatar )
+      profiles:profiles!user_id (username, avatar)
     `)
     .eq("sold", false)
     .order("created_at", { ascending: false })
-    .limit(PAGE_SIZE);
+    .limit(PAGE_SIZE)
+    .returns<ListingWithProfile[]>(); // ← Type-safe
 
   if (error) {
     console.error("Error loading listings:", error.message);
@@ -82,10 +82,7 @@ export default async function HomePage() {
     );
   }
 
-  const listings = (listRows ?? []) as Listing[];
-  const ids = listings.map((l) => l.id);
-
-  if (ids.length === 0) {
+  if (!listRows || listRows.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-pink-50/30 to-purple-50/20 flex items-center justify-center">
         <p className="text-gray-600 text-lg">No listings yet.</p>
@@ -93,72 +90,81 @@ export default async function HomePage() {
     );
   }
 
-  // ---- Aggregation ----
-  const [likesAllRes, commentsAllRes, userLikesRes, userSavesRes] =
-    await Promise.all([
-      supabase.from("likes").select("listing_id").in("listing_id", ids),
-      supabase.from("comments").select("listing_id").in("listing_id", ids),
-      userId
-        ? supabase
-            .from("likes")
-            .select("listing_id")
-            .eq("user_id", userId)
-            .in("listing_id", ids)
-        : Promise.resolve({ data: [] }),
-      userId
-        ? supabase
-            .from("saves")
-            .select("listing_id")
-            .eq("user_id", userId)
-            .in("listing_id", ids)
-        : Promise.resolve({ data: [] }),
-    ]);
+  const listings = listRows;
+  const ids = listings.map((l) => l.id);
 
-  const likesAll = likesAllRes.data ?? [];
-  const commentsAll = commentsAllRes.data ?? [];
-  const userLikes = userLikesRes.data ?? [];
-  const userSaves = userSavesRes.data ?? [];
+  // ---- Aggregation: Likes, Comments, User Actions ----
+  const [
+    { data: likesAll },
+    { data: commentsAll },
+    { data: userLikes },
+    { data: userSaves },
+  ] = await Promise.all([
+    supabase
+      .from("likes")
+      .select("listing_id")
+      .in("listing_id", ids)
+      .returns<ListingIdRow[]>(),
 
+    supabase
+      .from("comments")
+      .select("listing_id")
+      .in("listing_id", ids)
+      .returns<ListingIdRow[]>(),
+
+    userId
+      ? supabase
+          .from("likes")
+          .select("listing_id")
+          .eq("user_id", userId)
+          .in("listing_id", ids)
+          .returns<ListingIdRow[]>()
+      : Promise.resolve({ data: [] as ListingIdRow[] }),
+
+    userId
+      ? supabase
+          .from("saves")
+          .select("listing_id")
+          .eq("user_id", userId)
+          .in("listing_id", ids)
+          .returns<ListingIdRow[]>()
+      : Promise.resolve({ data: [] as ListingIdRow[] }),
+  ]);
+
+  // Build maps
   const likeCountMap = new Map<string, number>();
   const commentCountMap = new Map<string, number>();
   const userLikedSet = new Set<string>();
   const userSavedSet = new Set<string>();
 
-  for (const row of likesAll) {
-    if (row.listing_id)
-      likeCountMap.set(
-        row.listing_id,
-        (likeCountMap.get(row.listing_id) || 0) + 1
-      );
-  }
+  (likesAll ?? []).forEach((row) => {
+    if (row.listing_id) {
+      likeCountMap.set(row.listing_id, (likeCountMap.get(row.listing_id) ?? 0) + 1);
+    }
+  });
 
-  for (const row of commentsAll) {
-    if (row.listing_id)
-      commentCountMap.set(
-        row.listing_id,
-        (commentCountMap.get(row.listing_id) || 0) + 1
-      );
-  }
+  (commentsAll ?? []).forEach((row) => {
+    if (row.listing_id) {
+      commentCountMap.set(row.listing_id, (commentCountMap.get(row.listing_id) ?? 0) + 1);
+    }
+  });
 
-  for (const row of userLikes) {
+  (userLikes ?? []).forEach((row) => {
     if (row.listing_id) userLikedSet.add(row.listing_id);
-  }
-  for (const row of userSaves) {
-    if (row.listing_id) userSavedSet.add(row.listing_id);
-  }
+  });
 
-  // ---- Stable props ----
+  (userSaves ?? []).forEach((row) => {
+    if (row.listing_id) userSavedSet.add(row.listing_id);
+  });
+
+  // ---- Enhance Listings ----
   const now = Date.now();
 
   const safeListings = listings.map((l) => {
     const profile = one(l.profiles);
-    const sold = l.end_at ? new Date(l.end_at).getTime() <= now : false;
-    const secondsLeft = l.end_at
-      ? Math.max(
-          0,
-          Math.floor((new Date(l.end_at).getTime() - now) / 1000)
-        )
-      : null;
+    const endTime = l.end_at ? new Date(l.end_at).getTime() : 0;
+    const sold = endTime > 0 && endTime <= now;
+    const secondsLeft = endTime > 0 ? Math.max(0, Math.floor((endTime - now) / 1000)) : null;
 
     return {
       ...l,
@@ -170,13 +176,11 @@ export default async function HomePage() {
     };
   });
 
-  // ---- FEED UI ----
+  // ---- Render Feed ----
   return (
     <HomePageClient showTutorial={showTutorial}>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-pink-50/30 to-purple-50/20 pb-24">
-
         <div className="max-w-3xl mx-auto px-4 pt-8">
-          {/* SPACE BETWEEN POSTCARDS */}
           <div className="space-y-10">
             {safeListings.map((listing) => (
               <PostCard

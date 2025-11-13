@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import type { Database as GenDB } from "../../types/supabase";
+import type { Database as GenDB } from "@/types/supabase";
 
 type DB = GenDB & {
   public: GenDB["public"] & {

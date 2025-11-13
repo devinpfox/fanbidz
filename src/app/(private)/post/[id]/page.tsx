@@ -3,11 +3,10 @@ export const dynamic = "force-dynamic"; // ✅ ensures cookies() and params() ar
 
 import { cookies, headers } from "next/headers";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import type { Database as GenDB } from "../../../../../types/supabase";
+import type { Database as GenDB } from "@/types/supabase";
 import { notFound } from "next/navigation";
 import Image from "next/image"; 
 
-import type { Database } from "../../../../../types/supabase";
 import PostCard from "../../../../components/PostCard"; 
 
 // --- (Existing Types remain unchanged) ---

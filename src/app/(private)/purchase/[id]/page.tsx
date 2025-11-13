@@ -5,7 +5,7 @@ import Link from "next/link";
 import { cookies as nextCookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import type { Database } from "../../../../../types/supabase";
+import type { Database } from "@/types/supabase";
 import OrderChat from "@/components/OrderChat";
 
 export default async function PurchaseDetailPage({ params }: { params: { id: string } }) {
