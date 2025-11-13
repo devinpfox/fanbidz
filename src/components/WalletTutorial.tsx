@@ -86,93 +86,113 @@ export default function WalletTutorial({ onComplete }: WalletTutorialProps) {
   }, [step.mockView]);
 
   // Calculate tooltip position based on target element
-  useEffect(() => {
-    if (!step.targetSelector) {
-      setTooltipPosition(null);
-      return;
+  // MOBILE-SAFE tooltip position calculator
+useEffect(() => {
+  if (!step.targetSelector) {
+    setTooltipPosition(null);
+    return;
+  }
+
+  let isCancelled = false;
+
+  const measure = () => {
+    const el = document.querySelector(step.targetSelector as string) as HTMLElement | null;
+    if (!el) return null;
+
+    const rect = el.getBoundingClientRect();
+    if (!rect || rect.width === 0 || rect.height === 0) return null;
+
+    return rect;
+  };
+
+  const computePosition = () => {
+    const rect = measure();
+    if (!rect) return; // try again later
+
+    const isMobile = window.innerWidth < 768;
+    const tooltipWidth = isMobile ? Math.min(320, window.innerWidth - 32) : 320;
+    const tooltipHeight = 200;
+    const gap = isMobile ? 12 : 20;
+
+    let pos: TooltipPosition;
+
+    if (isMobile) {
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+
+      if (spaceBelow > tooltipHeight + gap) {
+        pos = {
+          left: Math.max(16, Math.min(window.innerWidth - tooltipWidth - 16, rect.left + rect.width / 2 - tooltipWidth / 2)),
+          top: rect.bottom + gap,
+          arrowDirection: "top",
+        };
+      } else if (spaceAbove > tooltipHeight + gap) {
+        pos = {
+          left: Math.max(16, Math.min(window.innerWidth - tooltipWidth - 16, rect.left + rect.width / 2 - tooltipWidth / 2)),
+          top: rect.top - tooltipHeight - gap,
+          arrowDirection: "bottom",
+        };
+      } else {
+        // Fallback for cramped screens
+        pos = {
+          left: (window.innerWidth - tooltipWidth) / 2,
+          top: window.innerHeight - tooltipHeight - 80,
+          arrowDirection: "top",
+        };
+      }
+    } else {
+      // desktop logic
+      if (rect.left > window.innerWidth / 2) {
+        pos = {
+          left: rect.left - tooltipWidth - gap,
+          top: rect.top + rect.height / 2 - tooltipHeight / 2,
+          arrowDirection: "right",
+        };
+      } else {
+        pos = {
+          left: rect.right + gap,
+          top: rect.top + rect.height / 2 - tooltipHeight / 2,
+          arrowDirection: "left",
+        };
+      }
+
+      if (pos.top < 20) pos.top = 20;
+      if (pos.top + tooltipHeight > window.innerHeight - 20) {
+        pos.top = window.innerHeight - tooltipHeight - 20;
+      }
     }
 
-    let retryCount = 0;
-    const maxRetries = 20;
+    if (!isCancelled) setTooltipPosition(pos);
+  };
 
-    const updatePosition = () => {
-      const element = document.querySelector(step.targetSelector as string);
-      if (!element) {
-        retryCount++;
-        if (retryCount < maxRetries) {
-          setTimeout(updatePosition, 100);
-        }
-        return;
-      }
+  // ✔ Wait for layout, transforms, AND animation frames  
+  const RAFmeasure = () => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          if (!isCancelled) computePosition();
+        }, 40);
+      });
+    });
+  };
 
-      const rect = element.getBoundingClientRect();
-      const isMobile = window.innerWidth < 768;
-      const tooltipWidth = isMobile ? Math.min(320, window.innerWidth - 32) : 320;
-      const tooltipHeight = 200;
-      const gap = isMobile ? 12 : 20;
+  // Initial run
+  RAFmeasure();
 
-      let position: TooltipPosition;
+  // Recalc on resize
+  window.addEventListener("resize", RAFmeasure);
 
-      if (isMobile) {
-        // On mobile, position below element when possible
-        const spaceBelow = window.innerHeight - rect.bottom;
-        const spaceAbove = rect.top;
+  // Recalc after mockView animations finish
+  const animTimeout = setTimeout(() => {
+    RAFmeasure();
+  }, 300);
 
-        if (spaceBelow > tooltipHeight + gap) {
-          // Position below
-          position = {
-            left: Math.max(16, Math.min(window.innerWidth - tooltipWidth - 16, rect.left + rect.width / 2 - tooltipWidth / 2)),
-            top: rect.bottom + gap,
-            arrowDirection: 'top',
-          };
-        } else if (spaceAbove > tooltipHeight + gap) {
-          // Position above
-          position = {
-            left: Math.max(16, Math.min(window.innerWidth - tooltipWidth - 16, rect.left + rect.width / 2 - tooltipWidth / 2)),
-            top: rect.top - tooltipHeight - gap,
-            arrowDirection: 'bottom',
-          };
-        } else {
-          // Not enough space, center on screen
-          position = {
-            left: (window.innerWidth - tooltipWidth) / 2,
-            top: window.innerHeight - tooltipHeight - 80,
-            arrowDirection: 'top',
-          };
-        }
-      } else {
-        // Desktop: position left or right
-        if (rect.left > window.innerWidth / 2) {
-          position = {
-            left: rect.left - tooltipWidth - gap,
-            top: rect.top + rect.height / 2 - tooltipHeight / 2,
-            arrowDirection: 'right',
-          };
-        } else {
-          position = {
-            left: rect.right + gap,
-            top: rect.top + rect.height / 2 - tooltipHeight / 2,
-            arrowDirection: 'left',
-          };
-        }
-
-        // Adjust if tooltip goes off screen vertically
-        if (position.top < 20) position.top = 20;
-        if (position.top + tooltipHeight > window.innerHeight - 20) {
-          position.top = window.innerHeight - tooltipHeight - 20;
-        }
-      }
-
-      setTooltipPosition(position);
-    };
-
-    const initialTimeout = setTimeout(updatePosition, 200);
-    window.addEventListener('resize', updatePosition);
-    return () => {
-      clearTimeout(initialTimeout);
-      window.removeEventListener('resize', updatePosition);
-    };
-  }, [step, currentStep, mockView]);
+  return () => {
+    isCancelled = true;
+    clearTimeout(animTimeout);
+    window.removeEventListener("resize", RAFmeasure);
+  };
+}, [currentStep, step.targetSelector, mockView]);
 
 
   const handleSkip = async () => {
