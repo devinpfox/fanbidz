@@ -113,3 +113,7 @@ a:hover { filter: brightness(0.95); }
 .engagement-row {
 padding-top: 3%;
 }
+
+.card-padding {
+margin-bottom: 5%;
+}

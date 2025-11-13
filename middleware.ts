@@ -13,5 +13,11 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    // Run on everything EXCEPT:
+    //  - next.js internals and assets
+    //  - favicon
+    //  - login page
+    '/((?!_next/static|_next/image|favicon.ico|login).*)',
+  ],
 };

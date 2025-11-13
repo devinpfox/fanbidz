@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -13,7 +14,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
-export default function AppNav() {
+const AppNav = memo(function AppNav() {
   const pathname = usePathname();
   const { profile, loading } = useAuth() || {};
 
@@ -55,38 +56,52 @@ export default function AppNav() {
   const showCenterAdd = role === "creator";
 
   return (
-    <nav className="sticky bottom-0 z-50 border-t bg-white flex justify-between items-center px-4 py-2 relative">
-      <div className="flex justify-between w-full">
-        {items.map((item) => {
-          const isItemActive = isActive(item.href);
-          return (
-            <Link
-            key={item.label}
-            href={item.href}
-            onClick={(e) => item.disabled && e.preventDefault()}
-            className={`flex flex-col items-center text-xs flex-1 transition-colors duration-200 ${
-              isItemActive ? "text-brand" : "text-black"
-            } ${item.disabled ? "opacity-50 pointer-events-none" : ""}`}
-            tabIndex={item.disabled ? -1 : 0}
-            aria-disabled={item.disabled}
-          >
-            {item.icon}
-            <span className="text-[11px]">{item.label}</span>
-          </Link>
-          );
-        })}
-      </div>
+<nav className="sticky bottom-0 z-50 border-t bg-white flex justify-between items-center px-4 py-2 relative">
+  <div
+    className={`flex justify-between w-full ${
+      showCenterAdd ? "px-2 sm:px-4" : "px-4"
+    }`}
+  >
+    {items.map((item, index) => {
+      const isItemActive = isActive(item.href);
+      const isSales = showCenterAdd && item.label === "Sales";
+      const isOrders = showCenterAdd && item.label === "Orders";
 
-      {showCenterAdd && (
+      // Adjust margins visually for balance
+      const spacingClass =
+        isSales ? "mr-8 sm:mr-10" : isOrders ? "ml-8 sm:ml-10" : "";
+
+      return (
         <Link
-          href="/add"
-          className="nav-add-button absolute left-1/2 -translate-x-1/2 -top-6 rounded-full flex flex-col items-center justify-center shadow-lg"
-          style={{ width: 64, height: 64 }}
-          aria-label="Add listing"
+          key={item.label}
+          href={item.href}
+          onClick={(e) => item.disabled && e.preventDefault()}
+          className={`flex flex-col items-center text-xs flex-1 transition-colors duration-200 ${spacingClass} ${
+            isItemActive ? "text-brand" : "text-black"
+          } ${item.disabled ? "opacity-50 pointer-events-none" : ""}`}
+          tabIndex={item.disabled ? -1 : 0}
+          aria-disabled={item.disabled}
         >
-          <Plus size={32} />
+          {item.icon}
+          <span className="text-[11px]">{item.label}</span>
         </Link>
-      )}
-    </nav>
+      );
+    })}
+  </div>
+
+  {showCenterAdd && (
+    <Link
+      href="/add"
+      className="nav-add-button absolute left-1/2 -translate-x-1/2 -top-6 rounded-full flex flex-col items-center justify-center shadow-lg"
+      style={{ width: 64, height: 64 }}
+      aria-label="Add listing"
+    >
+      <Plus size={32} />
+    </Link>
+  )}
+</nav>
+
   );
-}
+});
+
+export default AppNav;

@@ -6,9 +6,9 @@ import type { Database } from "../../types/supabase";
 
 type CommentRow = Database["public"]["Tables"]["comments"]["Row"];
 type CommentInsert = Database["public"]["Tables"]["comments"]["Insert"];
-type CommentItem = CommentRow & {
-  profiles?: { username: string | null; avatar: string | null } | null;
-};
+type CommentItem = CommentRow & { profiles?: ProfileSlim | null };
+type ProfileSlim = { username: string | null; avatar: string | null };
+
 
 export default function CommentSheet({
   listingId,
@@ -19,7 +19,7 @@ export default function CommentSheet({
   currentUserId?: string | null;
   onClose: () => void;
 }) {
-  const supabase = createClientComponentClient<Database>();
+  const supabase = createClientComponentClient<Database["public"]>();
   const [items, setItems] = useState<CommentItem[]>([]);
   const [text, setText] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -27,34 +27,45 @@ export default function CommentSheet({
   // load + subscribe
   useEffect(() => {
     let alive = true;
-
+  
     (async () => {
       const { data, error } = await supabase
         .from("comments")
         .select(
-          "id, text, created_at, user_id, listing_id, profiles:profiles!comments_user_id_fkey(username, avatar)"
+          "id, text, created_at, user_id, listing_id, " +
+          "profiles:profiles!comments_user_id_fkey(username, avatar)"
         )
         .eq("listing_id", listingId)
         .order("created_at", { ascending: true });
-
+  
       if (!alive) return;
-      if (!error) setItems((data as CommentItem[]) ?? []);
-      // scroll to bottom after first paint
+      if (error) return;
+  
+      // 🔧 normalize array-or-object → single object (first item) or null
+      const normalized: CommentItem[] = (data ?? []).map((row: any) => ({
+        ...row,
+        profiles: Array.isArray(row.profiles)
+          ? (row.profiles[0] ?? null)
+          : (row.profiles ?? null),
+      }));
+  
+      setItems(normalized);
       setTimeout(() => scrollRef.current?.scrollTo({ top: 9e9, behavior: "smooth" }), 0);
     })();
-
+  
     const channel = supabase
       .channel(`comments-${listingId}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "comments", filter: `listing_id=eq.${listingId}` },
         (payload) => {
-          setItems((p) => [...p, payload.new as CommentItem]);
+          // realtime payload won’t include the join; set profiles to null
+          setItems((p) => [...p, { ...(payload.new as any), profiles: null } as CommentItem]);
           setTimeout(() => scrollRef.current?.scrollTo({ top: 9e9, behavior: "smooth" }), 0);
         }
       )
       .subscribe();
-
+  
     return () => {
       alive = false;
       supabase.removeChannel(channel);
@@ -79,21 +90,25 @@ export default function CommentSheet({
     setItems((p) => [...p, tmp]);
     setText("");
 
-    const { error } = await supabase.from("comments").insert({
-      listing_id: listingId,
-      user_id: currentUserId,
-      text: txt,
-    } as CommentInsert);
+    const { error } = await supabase
+    .from("comments")
+    .insert<CommentInsert>([
+      {
+        listing_id: listingId,
+        user_id: currentUserId,
+        text: txt,
+      },
+    ]);
 
-    if (error) {
-      setItems((p) => p.filter((i) => i.id !== tmp.id));
-      alert(error.message || "Failed to comment");
-    }
+  if (error) {
+    setItems((p) => p.filter((i) => i.id !== tmp.id));
+    alert(error.message || "Failed to comment");
   }
+} // ← FIXED: this was missing!
 
-  const canPost = !!currentUserId;
+const canPost = !!currentUserId;
 
-  return (
+return (
     <>
       {/* Backdrop */}
       <div className="fixed inset-0 z-[180] bg-black/40" onClick={onClose} />

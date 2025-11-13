@@ -7,6 +7,7 @@ export default function SignOutButton() {
   const router = useRouter();
 
   const handleSignOut = async () => {
+    console.log('supabase:', supabase);
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error("Error signing out:", error.message);

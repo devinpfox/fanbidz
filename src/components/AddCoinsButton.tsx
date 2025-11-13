@@ -12,10 +12,16 @@ export default function AddCoinsButton({ initial = 10 }: { initial?: number }) {
     if (!coins || coins < 1) return;
     setLoading(true);
     try {
+      // Get current URL to return to after checkout
+      const returnUrl = typeof window !== 'undefined' ? window.location.pathname : '/wallet';
+
       const res = await fetch('/api/wallet/deposit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: coins }),
+        body: JSON.stringify({
+          amount: coins,
+          returnUrl: returnUrl
+        }),
       });
       const data = await res.json();
       if (data?.url) window.location.href = data.url;

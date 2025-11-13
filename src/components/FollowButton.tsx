@@ -1,28 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useSupabaseClient } from '@supabase/auth-helpers-react';
+import { useState, useEffect, memo } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import type { Database } from '../../types/supabase';
 
 type FollowButtonProps = {
   profileId: string;
 };
 
-export default function FollowButton({ profileId }: FollowButtonProps) {
-  const supabase = useSupabaseClient<Database>();
+const FollowButton = memo(function FollowButton({ profileId }: FollowButtonProps) {
+  const { user, supabase } = useAuth();
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkFollowStatus = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const currentUserId = sessionData?.session?.user?.id;
-      if (!currentUserId) return;
+      if (!user?.id) {
+        setLoading(false);
+        return;
+      }
 
       const { data } = await supabase
         .from('follows')
         .select('*')
-        .eq('follower_id', currentUserId)
+        .eq('follower_id', user.id)
         .eq('following_id', profileId)
         .maybeSingle();
 
@@ -31,26 +32,24 @@ export default function FollowButton({ profileId }: FollowButtonProps) {
     };
 
     checkFollowStatus();
-  }, [profileId, supabase]);
+  }, [profileId, user, supabase]);
 
   const handleClick = async () => {
+    if (!user?.id) return;
     setLoading(true);
-    const { data: sessionData } = await supabase.auth.getSession();
-    const currentUserId = sessionData?.session?.user?.id;
-    if (!currentUserId) return;
 
     if (isFollowing) {
       // unfollow
       await supabase
         .from('follows')
         .delete()
-        .eq('follower_id', currentUserId)
+        .eq('follower_id', user.id)
         .eq('following_id', profileId);
       setIsFollowing(false);
     } else {
       // follow
       await supabase.from('follows').insert({
-        follower_id: currentUserId,
+        follower_id: user.id,
         following_id: profileId,
       });
       setIsFollowing(true);
@@ -70,4 +69,6 @@ export default function FollowButton({ profileId }: FollowButtonProps) {
       {loading ? 'Loading...' : isFollowing ? 'Unfollow' : 'Follow'}
     </button>
   );
-}
+});
+
+export default FollowButton;

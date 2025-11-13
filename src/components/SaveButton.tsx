@@ -27,7 +27,7 @@ export default function SaveButton({
   initialSaved?: boolean;
   className?: string;
 }) {
-  const supabase = createClientComponentClient<DB>();
+  const supabase = createClientComponentClient<DB["public"]>();
   const [saved, setSaved] = useState(initialSaved);
   const [busy, setBusy] = useState(false);
 
@@ -36,9 +36,7 @@ export default function SaveButton({
     setBusy(true);
     try {
       if (!saved) {
-        const { error } = await supabase
-          .from("saves")
-          .insert({ listing_id: listingId, user_id: userId });
+        const { error } = await supabase.from("saves").insert([{ listing_id: listingId, user_id: userId }]);
         if (error) throw error;
         setSaved(true);
       } else {

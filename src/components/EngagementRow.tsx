@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import LikeButton from "./LikeButton";
 import CommentSheet from "./CommentSheet";
 import { MessageCircle } from "lucide-react";
 import SaveButton from "./SaveButton";
 
-export default function EngagementRow({
+const EngagementRow = memo(function EngagementRow({
   listingId,
   currentUserId,
   likeCount,
@@ -75,5 +75,6 @@ export default function EngagementRow({
       )}
     </>
   );
-  
-}
+});
+
+export default EngagementRow;

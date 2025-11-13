@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import type { Database } from "../../types/supabase";
@@ -18,16 +18,19 @@ export default function LikeButton({ listingId, userId, hasLiked, likeCount }: P
   const router = useRouter();
   const [liked, setLiked] = useState(hasLiked);
   const [count, setCount] = useState(likeCount);
-  const [pending, startTransition] = useTransition();
+  const [pending, setPending] = useState(false);
 
   async function toggle() {
     if (!userId) {
       router.push("/login");
       return;
     }
+    if (pending) return; // Prevent double-clicks
+
     const next = !liked;
     setLiked(next);
     setCount((c) => c + (next ? 1 : -1));
+    setPending(true);
 
     try {
       if (next) {
@@ -43,11 +46,13 @@ export default function LikeButton({ listingId, userId, hasLiked, likeCount }: P
           .eq("user_id", userId);
         if (error) throw error;
       }
-      startTransition(() => router.refresh());
+      // ✅ Removed router.refresh() - optimistic update is sufficient
     } catch {
       // revert on error
       setLiked(!next);
       setCount((c) => c - (next ? 1 : -1));
+    } finally {
+      setPending(false);
     }
   }
 
