@@ -43,7 +43,7 @@ export async function GET(req: Request) {
     .from("wallet_transactions")
     .select("id")
     .eq("session_id", session.id)
-    .maybeSingle();
+    .maybeSingle<{ id: string }>();
 
   if (checkErr) {
     console.error("❌ Error checking wallet_transactions:", checkErr.message);
@@ -83,7 +83,7 @@ export async function GET(req: Request) {
   // 💰 Update wallet balance
   const { error: updateErr } = await admin
     .from("wallets")
-    .update({ balance: newBalance })
+    .update({ balance: newBalance } as any)
     .eq("user_id", userId);
 
   if (updateErr) {

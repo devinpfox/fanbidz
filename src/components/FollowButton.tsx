@@ -25,7 +25,7 @@ const FollowButton = memo(function FollowButton({ profileId }: FollowButtonProps
         .select('*')
         .eq('follower_id', user.id)
         .eq('following_id', profileId)
-        .maybeSingle();
+        .maybeSingle<{ id: string }>();
 
       setIsFollowing(!!data);
       setLoading(false);

@@ -47,7 +47,7 @@ export async function POST(
 
   const { error: updErr } = await supabase
     .from("orders")
-    .update({ shipping: next })
+    .update({ shipping: next as any })
     .eq("id", params.id);
 
   if (updErr) return NextResponse.json({ error: updErr.message }, { status: 500 });

@@ -79,7 +79,7 @@ export async function POST(req: Request) {
     .eq("listing_id", listing_id)
     .order("amount", { ascending: false })
     .limit(1)
-    .maybeSingle();
+    .maybeSingle<{ user_id: string; amount: number }>();
 
   // Refund previous top bidder if different from current
   if (lastBidder?.user_id && lastBidder.user_id !== user.id) {
@@ -92,7 +92,7 @@ export async function POST(req: Request) {
     const refundAmt = Number(lastBidder.amount ?? 0);
 
     await admin.from("wallets")
-      .update({ balance: prevBal + refundAmt })
+      .update({ balance: prevBal + refundAmt } as any)
       .eq("user_id", lastBidder.user_id);
 
     await admin.from("transactions").insert({
@@ -105,7 +105,7 @@ export async function POST(req: Request) {
 
   // Hold coins from current bidder
   await admin.from("wallets")
-    .update({ balance: myBal - amount })
+    .update({ balance: myBal - amount } as any)
     .eq("user_id", user.id);
 
   await admin.from("transactions").insert({
@@ -123,7 +123,7 @@ export async function POST(req: Request) {
   if (bidError) {
     // Soft rollback the hold
     await admin.from("wallets")
-      .update({ balance: myBal })
+      .update({ balance: myBal } as any)
       .eq("user_id", user.id);
     await admin.from("transactions").insert({
       user_id: user.id,
@@ -137,7 +137,7 @@ export async function POST(req: Request) {
   // Update listing top bid
   const { error: updateError } = await admin
     .from("listings")
-    .update({ last_bid: amount })
+    .update({ last_bid: amount } as any)
     .eq("id", listing_id);
 
   if (updateError) {

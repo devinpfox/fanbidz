@@ -41,7 +41,7 @@ export default function BuyNowButton({
       .from('wallets')
       .select('balance')
       .eq('user_id', userId)
-      .maybeSingle(); // avoids throw if row doesn't exist
+      .maybeSingle<{ balance: number }>(); // avoids throw if row doesn't exist
   
     const b = Number(data?.balance ?? 0);
     if (!error) setBalance(b); // keep UI in sync

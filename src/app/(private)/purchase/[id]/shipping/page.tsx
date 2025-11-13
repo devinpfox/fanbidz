@@ -35,7 +35,7 @@ export default async function BuyerShippingPage({ params }: { params: { id: stri
       listings:listing_id ( title, images )
     `)
     .eq("id", params.id)
-    .maybeSingle();
+    .maybeSingle<any>();
 
     if (!order || order.buyer_id !== user.id) return notFound();
 

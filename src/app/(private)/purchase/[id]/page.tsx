@@ -31,7 +31,7 @@ export default async function PurchaseDetailPage({ params }: { params: { id: str
     `)
     .eq("id", params.id)
     .eq("buyer_id", userId)
-    .maybeSingle();
+    .maybeSingle<any>();
 
   if (error) {
     return (
