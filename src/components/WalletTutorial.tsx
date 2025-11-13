@@ -204,7 +204,8 @@ export default function WalletTutorial({ onComplete }: WalletTutorialProps) {
 
       await supabase
         .from('profiles')
-        .update({ first_time: false } as any)
+        // @ts-expect-error - Type inference issue with @supabase/auth-helpers-nextjs v0.10.0
+        .update({ first_time: false })
         .eq('id', user.id);
     } catch (error) {
       console.error('Error updating tutorial status:', error);

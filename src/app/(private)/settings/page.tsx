@@ -13,19 +13,19 @@ export default async function SettingsPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // Load profile (so the form doesn’t flicker)
+  // Load profile (so the form doesn't flicker)
   const { data: profile } = await supabase
     .from("profiles")
     .select("username, role, first_name, last_name, phone, email")
     .eq("id", user.id)
-    .single();
+    .single() as any;
 
   // Load wallet balance for badge
   const { data: wallet } = await supabase
     .from("wallets")
     .select("balance")
     .eq("user_id", user.id)
-    .single();
+    .single() as any;
 
   return (
     <div className="space-y-6 p-6 max-w-md mx-auto">

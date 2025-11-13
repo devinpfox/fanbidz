@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import type { Database } from "../../types/supabase";
+import type { Database } from "@/types/supabase";
 
 export default function ProfileGuard({
   children,

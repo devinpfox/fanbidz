@@ -49,7 +49,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const cookieStore = await cookies();
 
-  const supabase = createServerComponentClient<Database>({
+  const supabase = createServerComponentClient<DB>({
     cookies: () => cookieStore as any,
   });
   

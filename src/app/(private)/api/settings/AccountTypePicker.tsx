@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import type { Database, Tables } from "@/types/supabase";
+import type { Database } from "@/types/supabase";
 
 export type Role = "creator" | "consumer";  // ⬅️ use your backend values
 
@@ -29,6 +29,7 @@ export default function AccountTypePicker({
     setRole(next);
     onChange?.(next);           // keep parent in sync
 
+    // @ts-expect-error - Type inference issue with @supabase/auth-helpers-nextjs v0.10.0
     const { error } = await supabase.from("profiles").update({ role: next }).eq("id", userId);
     if (error) setMsg(error.message || "Failed to save");
     else { setMsg("Saved"); router.refresh(); }

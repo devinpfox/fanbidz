@@ -36,7 +36,7 @@ export default function WalletWidget() {
         .from('profiles')
         .select('role')
         .eq('id', user.id)
-        .single();
+        .single() as any;
 
       if (mounted && profile?.role === 'consumer') {
         setIsConsumer(true);
@@ -46,7 +46,7 @@ export default function WalletWidget() {
           .from('wallets')
           .select('balance')
           .eq('user_id', user.id)
-          .single();
+          .single() as any;
 
         if (mounted) setBalance(wallet?.balance ?? 0);
 

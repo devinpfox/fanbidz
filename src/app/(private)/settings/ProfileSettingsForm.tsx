@@ -43,7 +43,7 @@ export default function ProfileSettingsForm({ userId, initial }: Props) {
         last_name: lastName,
         phone,
       },
-    ]);
+    ] as any);
 
     setSaving(false);
 

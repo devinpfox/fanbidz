@@ -41,7 +41,7 @@ export default async function PurchasesPage({
         listings:listing_id ( title, images, end_at )
       `)
       .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false }) as any;
 
 
     // Keep the latest bid per listing
@@ -70,7 +70,7 @@ export default async function PurchasesPage({
       const { data: allForThese } = await supabase
         .from("bids")
         .select("listing_id, amount")
-        .in("listing_id", listingIds);
+        .in("listing_id", listingIds) as any;
 
       for (const r of allForThese ?? []) {
         const id = r.listing_id!;

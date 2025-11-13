@@ -3,6 +3,7 @@ import { cookies as nextCookies } from "next/headers";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import type { Database } from "../../../../types/supabase";
 import RangeSelect from "./RangeSelect";
+import { QueryData } from "@supabase/supabase-js";
 
 function parseDays(search: string | undefined) {
   const n = Number(search);
@@ -28,6 +29,20 @@ export default async function SalesPage({
   const days = parseDays(searchParams?.days);
   const sinceISO = new Date(Date.now() - days * 86_400_000).toISOString();
 
+  type OrdersWithDetails = {
+    id: string;
+    price: number;
+    status: string;
+    created_at: string | null;
+    listings: {
+      title: string | null;
+      images: string[] | null;
+    } | null;
+    buyer: {
+      username: string | null;
+    } | null;
+  };
+
   const { data: orders, error } = await supabase
     .from("orders")
     .select(
@@ -39,7 +54,8 @@ export default async function SalesPage({
     )
     .eq("seller_id", user.id)
     .gte("created_at", sinceISO)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .returns<OrdersWithDetails[]>();
 
   if (error) {
     return (

@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import type { Session, User, SupabaseClient } from "@supabase/supabase-js";
-import type { Database, Tables } from "../../types/supabase";
+import type { Database, Tables } from "@/types/supabase";
 
 type Profile = Tables<"profiles">;
 

@@ -32,7 +32,7 @@ export default function BidActions({
     const { data, error } = await supabase
       .from('wallets')
       .select('balance')
-      .single();
+      .single() as any;
     if (!error) setBalance(Number(data?.balance ?? 0));
   }
 

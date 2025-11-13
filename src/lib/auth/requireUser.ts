@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import type { Database } from '../../../types/database';
+import type { Database } from '../../../types/supabase';
 
 export async function requireUser(nextPath: string = '/') {
   const supabase = createServerComponentClient<Database>({ cookies });

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import type { Database } from "../../types/supabase";
+import type { Database } from "@/types/supabase";
 import FollowButton from "./FollowButton";
 
 export default function SearchClient() {

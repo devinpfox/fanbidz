@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import type { Database } from "../../types/supabase";
+import type { Database } from "@/types/supabase";
 import { Heart } from "lucide-react";
 
 type Props = {

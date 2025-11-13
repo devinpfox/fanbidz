@@ -22,16 +22,16 @@ export function useUserHydration() {
         .from('wallets')
         .select('balance')
         .eq('user_id', user.id)
-        .single();
+        .single() as any;
       if (wallet?.balance != null) setWalletBalance(Number(wallet.balance));
 
       // Fetch liked and saved listings for this user
       const [{ data: likes }, { data: saves }] = await Promise.all([
-        supabase.from('likes').select('listing_id').eq('user_id', user.id),
-        supabase.from('saves').select('listing_id').eq('user_id', user.id),
+        supabase.from('likes').select('listing_id').eq('user_id', user.id) as any,
+        supabase.from('saves').select('listing_id').eq('user_id', user.id) as any,
       ]);
-      setLikedSet(new Set((likes ?? []).map((r) => r.listing_id!)));
-      setSavedSet(new Set((saves ?? []).map((r) => r.listing_id!)));
+      setLikedSet(new Set((likes ?? []).map((r: any) => r.listing_id)));
+      setSavedSet(new Set((saves ?? []).map((r: any) => r.listing_id)));
     })();
   }, []);
 
