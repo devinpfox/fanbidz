@@ -5,7 +5,8 @@ import type { Database } from "../../../types/supabase"; // ← Full Database
 import PostCard from "../../components/PostCard.client";
 import HomePageClient from "./HomePageClient";
 
-export const revalidate = 120;
+// ✅ Use force-dynamic to ensure real-time updates after user actions
+export const dynamic = "force-dynamic";
 
 // Use the generated helper types!
 type ProfilesRow = Database["public"]["Tables"]["profiles"]["Row"];

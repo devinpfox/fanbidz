@@ -46,7 +46,9 @@ export default function LikeButton({ listingId, userId, hasLiked, likeCount }: P
           .eq("user_id", userId);
         if (error) throw error;
       }
-      // ✅ Removed router.refresh() - optimistic update is sufficient
+
+      // ✅ Refresh server components to update like counts across pages
+      router.refresh();
     } catch {
       // revert on error
       setLiked(!next);

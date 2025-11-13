@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useTransition } from "react";
-import AddCoinsButton from "@/components/AddCoinsButton"; 
+import { useRouter } from "next/navigation";
+import AddCoinsButton from "@/components/AddCoinsButton";
 import React from "react"; // Required for React.Dispatch type
 
 interface Props {
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export default function PlaceBid({ listingId, userId, setLiveHighestBid }: Props) {
+  const router = useRouter();
   const [amount, setAmount] = useState("");
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState("");
@@ -51,9 +53,12 @@ export default function PlaceBid({ listingId, userId, setLiveHighestBid }: Props
         setAmount("");
         setMessage("✅ Bid placed successfully!");
         setShowTopUp(false);
-        
+
         // ⭐ LOGIC INTEGRATED: Optimistically update the highest bid in the parent state
         setLiveHighestBid(prev => prev !== null ? Math.max(prev, bidValue) : bidValue);
+
+        // ✅ Refresh server components to update bid amounts and wallet balance
+        router.refresh();
       }
     } catch (err) {
       console.error(err);

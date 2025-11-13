@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import type { Database } from "../../types/supabase";
 
@@ -21,6 +22,7 @@ export default function CommentSheet({
   currentUserId?: string | null;
   onClose: () => void;
 }) {
+  const router = useRouter();
   const supabase = createClientComponentClient<Database["public"]>();
   const [items, setItems] = useState<CommentItem[]>([]);
   const [text, setText] = useState("");
@@ -130,6 +132,9 @@ export default function CommentSheet({
       // Rollback on error
       setItems((p) => p.filter((i) => i.id !== tmp.id));
       alert(error.message || "Failed to comment");
+    } else {
+      // ✅ Refresh server components to update comment counts
+      router.refresh();
     }
     // No need to worry about the realtime handler because the 'tmp' comment will
     // be replaced/matched by the permanent one when the initial load runs again

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import type { Database as GenDB } from "@/types/supabase";
 
@@ -27,6 +28,7 @@ export default function SaveButton({
   initialSaved?: boolean;
   className?: string;
 }) {
+  const router = useRouter();
   const supabase = createClientComponentClient<DB["public"]>();
   const [saved, setSaved] = useState(initialSaved);
   const [busy, setBusy] = useState(false);
@@ -48,6 +50,9 @@ export default function SaveButton({
         if (error) throw error;
         setSaved(false);
       }
+
+      // ✅ Invalidate Router Cache to refresh server components
+      router.refresh();
     } catch (e: any) {
       alert(e.message ?? "Unable to update saved state");
     } finally {
