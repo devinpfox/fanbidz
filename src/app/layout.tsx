@@ -20,7 +20,7 @@ const montserrat = localFont({
 });
 
 export const metadata = {
-  title: "JustBidz",
+  title: "Fanbids",
   description: "The auction platform for creators.",
   other: { "color-scheme": "light" },
 
@@ -29,13 +29,13 @@ export const metadata = {
     title: "Fanbids",
     description: "Bid, buy, and sell with creators.",
     url: "http://fanbidz.vercel.app/",
-    siteName: "JustBidz",
+    siteName: "FanBids",
     images: [
       {
         url: "/social-preview.png", // <-- put your 1920x1080 image here
         width: 1920,
         height: 1080,
-        alt: "JustBidz Preview",
+        alt: "Fanbids Preview",
       },
     ],
     type: "website",
@@ -44,7 +44,7 @@ export const metadata = {
   // ✅ Twitter Card (X)
   twitter: {
     card: "summary_large_image",
-    title: "JustBidz",
+    title: "Fanbids",
     description: "Bid, buy, and sell with creators.",
     images: ["/social-preview.png"],
   },
