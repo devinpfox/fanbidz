@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import type { Database } from "../../types/supabase";
 import PlaceBid from "./PlaceBid";
 import BuyNowButton from "./BuyNowButton";
+import FlipNumber from "./FlipNumber"; // Import FlipNumber
 
 export default function PostRightCTA({
   listingId,
@@ -23,19 +26,66 @@ export default function PostRightCTA({
 }) {
   const [open, setOpen] = useState(false);
 
-  const lastBidText = highestBid != null ? `$${highestBid.toFixed(2)}` : "—";
+  // ⭐ Local state (real-time)
+  const [liveHighestBid, setLiveHighestBid] = useState<number | null>(highestBid);
+
+  // ⭐ Sync local state with initial prop whenever the prop changes
+  useEffect(() => {
+    // Only update the live state if the incoming prop is higher
+    // (This prevents the real-time update from being overwritten by old prop data)
+    setLiveHighestBid((prev) => {
+      if (prev === null || highestBid === null) {
+        return highestBid;
+      }
+      return Math.max(prev, highestBid);
+    });
+  }, [highestBid]); // Run whenever the initial highestBid prop changes
+
+  // ⭐ REALTIME SUBSCRIPTION
+  useEffect(() => {
+    const supabase = createClientComponentClient<Database>();
+
+    const channel = supabase
+      .channel(`bids-listen-${listingId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "bids",
+          filter: `listing_id=eq.${listingId}`,
+        },
+        (payload) => {
+          const newBid = payload.new as any;
+          const newBidAmount = newBid.amount ?? 0;
+
+          // This logic remains correct for handling real-time inserts
+          setLiveHighestBid((prev) =>
+            prev != null ? Math.max(prev, newBidAmount) : newBidAmount
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [listingId]);
+
+  // Use liveHighestBid for display
+  const lastBidText = liveHighestBid != null ? `$${liveHighestBid.toFixed(2)}` : "—";
 
   return (
     <div className="flex flex-col items-end text-right space-y-2 w-full">
 
       {/* LAST BID */}
-      {highestBid !== null && (
+      {liveHighestBid !== null && (
         <div className="text-right shrink-0">
           <div className="text-sm text-gray-500 font-medium tracking-wide">
             Last Bid
           </div>
           <div className="text-xl font-semibold text-gray-900 tracking-tight">
-            {lastBidText}
+            <FlipNumber value={liveHighestBid} prefix="$" decimals={2} />
           </div>
         </div>
       )}
@@ -122,10 +172,12 @@ export default function PostRightCTA({
                 </button>
               </div>
 
-              <PlaceBid listingId={listingId} userId={userId} />
+              <PlaceBid listingId={listingId} userId={userId} setLiveHighestBid={setLiveHighestBid} />
 
               <p className="mt-3 text-xs text-gray-500">
-                Highest bid: {lastBidText}
+                Highest bid: {liveHighestBid !== null ? (
+                  <FlipNumber value={liveHighestBid} prefix="$" decimals={2} className="inline" />
+                ) : "—"}
                 {buyNow != null && ` · Buy Now: $${buyNow.toFixed(2)}`}
               </p>
             </div>

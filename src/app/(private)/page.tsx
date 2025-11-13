@@ -170,7 +170,7 @@ if (userId) {
     const endTime = l.end_at ? new Date(l.end_at).getTime() : 0;
     const sold = endTime > 0 && endTime <= now;
     const secondsLeft = endTime > 0 ? Math.max(0, Math.floor((endTime - now) / 1000)) : null;
-
+  
     return {
       ...l,
       profile,
@@ -180,14 +180,16 @@ if (userId) {
       commentCount: commentCountMap.get(l.id) ?? 0,
     };
   });
-
+  
+  // NEW → Hide ended auctions
+  const activeListings = safeListings.filter((l) => !l.sold);
   // ---- Render Feed ----
   return (
     <HomePageClient showTutorial={showTutorial}>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-pink-50/30 to-purple-50/20 pb-24">
         <div className="max-w-3xl mx-auto px-4 pt-8">
           <div className="space-y-10">
-            {safeListings.map((listing) => (
+            {activeListings.map((listing) => (
               <PostCard
                 key={listing.id}
                 cover={listing.images?.[0] ?? "https://via.placeholder.com/800"}

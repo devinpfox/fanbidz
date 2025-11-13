@@ -77,6 +77,11 @@ export default function WalletWidget() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+const handleTouchStart = (e: React.TouchEvent) => {
+  const touch = e.touches[0];
+  setIsDragging(true);
+  setDragStartY(touch.clientY - positionY);
+};
   // Drag handlers for vertical movement
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -84,32 +89,47 @@ export default function WalletWidget() {
     setDragStartY(e.clientY - positionY);
   };
 
+  const moveWidget = (newY: number) => {
+    const maxY = window.innerHeight - (widgetRef.current?.offsetHeight || 0);
+    setPositionY(Math.max(0, Math.min(newY, maxY)));
+  };
+  
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging) return;
-
       const newY = e.clientY - dragStartY;
-
-      // Keep widget within viewport bounds
-      const maxY = window.innerHeight - (widgetRef.current?.offsetHeight || 0);
-
-      setPositionY(Math.max(0, Math.min(newY, maxY)));
+      moveWidget(newY);
     };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
+  
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isDragging) return;
+      const touch = e.touches[0];
+      const newY = touch.clientY - dragStartY;
+      moveWidget(newY);
     };
-
+  
+    const handleEnd = () => setIsDragging(false);
+  
     if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleEnd);
+  
+      document.addEventListener("touchmove", handleTouchMove, { passive: false });
+      document.addEventListener("touchend", handleEnd);
+      document.addEventListener("touchcancel", handleEnd);
     }
-
+  
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleEnd);
+  
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", handleEnd);
+      document.removeEventListener("touchcancel", handleEnd);
     };
   }, [isDragging, dragStartY]);
+  
 
   // Don't render if not a consumer or balance not loaded
   if (!isConsumer || balance === null) return null;
@@ -128,6 +148,7 @@ export default function WalletWidget() {
           cursor: isDragging ? 'grabbing' : 'grab',
         }}
         onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
       >
         <div
           className="flex items-center transition-transform duration-300 ease-out"

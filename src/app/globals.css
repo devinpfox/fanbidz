@@ -117,3 +117,14 @@ padding-top: 3%;
 .card-padding {
 margin-bottom: 5%;
 }
+
+@keyframes flip-digit {
+  0% { transform: rotateX(0deg); opacity: 1; }
+  50% { transform: rotateX(90deg); opacity: 0.3; }
+  100% { transform: rotateX(0deg); opacity: 1; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.2); }
+}

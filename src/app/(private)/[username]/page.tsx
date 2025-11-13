@@ -180,7 +180,7 @@ export default async function ProfilePage({
           </div>
         </div>
 
-        {/* HIGHLIGHTS — removed backdrop-blur */}
+        {/* HIGHLIGHTS — removed backdrop-blur
         <div className="flex gap-6 justify-center sm:justify-start mb-12">
           {[{ label: "Undies" }, { label: "Shoes" }, { label: "New" }].map((h, i) => (
             <div key={i} className="flex flex-col items-center">
@@ -194,7 +194,7 @@ export default async function ProfilePage({
               <span className="text-xs mt-1 text-gray-700">{h.label}</span>
             </div>
           ))}
-        </div>
+        </div> */}
 
         {/* LISTINGS / ORDERS — removed backdrop-blur from cards */}
         {isConsumerOwner ? (

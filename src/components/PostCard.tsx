@@ -3,12 +3,16 @@
 import { useEffect, useState, memo } from 'react';
 import Image from 'next/image';
 import SaveButton from './SaveButton';
-import EngagementRow from './EngagementRow';
+import EngagementRow from './EngagementRow'; // Assuming this is the correct path
 import PostRightCTA from './PostRightCTA';
 import CommentsLink from './CommentsLink';
 import PostMediaCarousel from './PostMediaCarousel';
 import CountdownBadge from "@/components/CountdownBadgeWrapper";
+import PlaceBid from "./PlaceBid"; // Import PlaceBid
 import Link from "next/link";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"; // Import Supabase client
+import type { Database } from "../../types/supabase"; // Import Database type
+import FlipNumber from "./FlipNumber"; // Import FlipNumber
 
 type Profile = { username: string | null; avatar: string | null };
 
@@ -68,11 +72,53 @@ const PostCard = memo(function PostCard({
   const imgs = (images?.length ? images : [cover]).filter(Boolean) as string[];
 
   const [localDate, setLocalDate] = useState<string>(getInitialDateString(datePosted));
+  const [bidModalOpen, setBidModalOpen] = useState(false);
+  const [liveHighestBid, setLiveHighestBid] = useState<number | null>(highestBid); // Local state for real-time bid
+
   useEffect(() => {
     if (datePosted) {
       setLocalDate(new Date(datePosted).toLocaleDateString());
     }
   }, [datePosted]);
+
+  // Sync local state with initial prop whenever the prop changes
+  useEffect(() => {
+    setLiveHighestBid((prev) => {
+      if (prev === null || highestBid === null) {
+        return highestBid;
+      }
+      return Math.max(prev, highestBid);
+    });
+  }, [highestBid]);
+
+  // REALTIME SUBSCRIPTION for PostCard
+  useEffect(() => {
+    const supabase = createClientComponentClient<Database>();
+
+    const channel = supabase
+      .channel(`bids-listen-${listingId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "bids",
+          filter: `listing_id=eq.${listingId}`,
+        },
+        (payload) => {
+          const newBid = payload.new as any;
+          const newBidAmount = newBid.amount ?? 0;
+          setLiveHighestBid((prev) =>
+            prev != null ? Math.max(prev, newBidAmount) : newBidAmount
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [listingId]);
 
   return (
     <div
@@ -202,7 +248,7 @@ const PostCard = memo(function PostCard({
           <PostRightCTA
             listingId={listingId}
             userId={currentUserId}
-            highestBid={highestBid}
+            highestBid={liveHighestBid} // Pass liveHighestBid
             buyNow={buyNow}
             ended={sold || false}
             category={category}
@@ -243,6 +289,8 @@ const PostCard = memo(function PostCard({
 {/* Bid Button – no background bar, no border, no shadow */}
 <button
   type="button"
+  disabled={!currentUserId || sold || false}
+  onClick={() => setBidModalOpen(true)}
   className="
     inline-flex items-center justify-center gap-2
     rounded-2xl px-6 py-3 w-[140px]
@@ -250,6 +298,7 @@ const PostCard = memo(function PostCard({
     bg-gradient-to-r from-fuchsia-500 via-pink-500 to-rose-500
     hover:scale-[1.03] active:scale-95
     transition-transform
+    disabled:opacity-50 disabled:scale-100
   "
 >
   Bid →
@@ -257,9 +306,53 @@ const PostCard = memo(function PostCard({
 
 </div>
       </div>
+
+      {/* Bid Modal */}
+      {bidModalOpen && (
+        <>
+          {/* Fade overlay */}
+          <div
+            className="fixed inset-0 z-[180] bg-black/40"
+            onClick={() => setBidModalOpen(false)}
+          />
+
+          {/* Modal card */}
+          <div className="fixed inset-x-0 bottom-0 z-[200] sm:inset-0">
+            <div
+              className="
+                mx-auto w-full max-w-sm sm:max-w-md
+                sm:mt-24 rounded-t-2xl sm:rounded-2xl
+                bg-white shadow-2xl p-5
+              "
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Place a Bid
+                </h3>
+                <button
+                  onClick={() => setBidModalOpen(false)}
+                  className="text-2xl leading-none px-2 text-gray-600 hover:text-gray-900"
+                >
+                  ×
+                </button>
+              </div>
+
+              <PlaceBid listingId={listingId} userId={currentUserId} setLiveHighestBid={setLiveHighestBid} />
+
+              <p className="mt-3 text-xs text-gray-500">
+                Highest bid: {liveHighestBid !== null ? (
+                  <FlipNumber value={liveHighestBid} prefix="$" decimals={2} className="inline" />
+                ) : "—"}
+                {buyNow != null && ` · Buy Now: $${buyNow.toFixed(2)}`}
+              </p>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
-  
+
 });
 
 export default PostCard;
