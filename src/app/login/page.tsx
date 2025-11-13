@@ -90,10 +90,10 @@ export default function LoginPage() {
         onSubmit={handleLogin}
         autoComplete="off"
         className="
-          relative w-full max-w-sm 
-          p-10 
-          rounded-3xl 
-          backdrop-blur-xl 
+          relative w-full max-w-sm
+          p-10
+          rounded-3xl
+          backdrop-blur-xl
           bg-white/40
           border border-white/20
           shadow-[0_8px_40px_rgba(0,0,0,0.12)]

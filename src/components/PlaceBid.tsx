@@ -73,12 +73,12 @@ export default function PlaceBid({ listingId, userId, setLiveHighestBid }: Props
           backdrop-blur-xl bg-white/80
           border border-white/20
           shadow-xl shadow-black/5
-          rounded-2xl 
+          rounded-2xl
           p-6
-          transition-all 
+          transition-all duration-300
         "
       >
-        <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+        <label className="text-sm font-semibold text-gray-500 uppercase tracking-[0.08em]">
           Enter Your Bid
         </label>
 
@@ -103,14 +103,14 @@ export default function PlaceBid({ listingId, userId, setLiveHighestBid }: Props
             onClick={() => startTransition(placeBid)}
             disabled={isPending}
             className="
-              px-6 py-3 rounded-xl 
+              px-6 py-3 rounded-xl
               bg-gradient-to-r from-fuchsia-500 via-pink-500 to-rose-500
               text-white font-semibold text-base
               shadow-lg shadow-pink-500/30
               hover:shadow-xl hover:scale-[1.03]
               active:scale-95
               disabled:opacity-50 disabled:scale-100
-              transition-transform duration-200
+              transition-all duration-200
               whitespace-nowrap
             "
           >
@@ -122,7 +122,7 @@ export default function PlaceBid({ listingId, userId, setLiveHighestBid }: Props
         {message && (
           <div
             className={`
-              mt-4 rounded-xl p-4 animate-in fade-in duration-300 
+              mt-4 rounded-xl p-4 animate-in fade-in duration-300
               flex items-start gap-4 border text-sm font-medium
               ${
                 isSuccess

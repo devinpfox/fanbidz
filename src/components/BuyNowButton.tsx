@@ -46,11 +46,10 @@ function ConfirmationDialog({
           >
             Cancel
           </button>
-          
+
           <button
             type="button"
             onClick={onConfirm}
-            // Use the branded gradient button style here
             className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-fuchsia-500 to-pink-500 text-white font-bold shadow-lg shadow-pink-500/25 hover:shadow-xl hover:scale-[1.01] active:scale-99 transition-all"
           >
             Confirm Buy Now

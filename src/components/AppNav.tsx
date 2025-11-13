@@ -46,17 +46,17 @@ const AppNav = memo(function AppNav() {
       >
         <div
           className={`
-            p-2 rounded-xl transition-all
+            p-2 rounded-xl transition-all duration-200
             ${
               active
-                ? "bg-gradient-to-br from-fuchsia-500 to-pink-500 text-white shadow-lg shadow-pink-500/30"
-                : "bg-white/50 backdrop-blur border border-white/30"
+                ? "bg-gradient-to-br from-fuchsia-500 to-pink-500 text-white shadow-lg shadow-pink-500/30 scale-105"
+                : "bg-white/50 backdrop-blur border border-white/30 hover:bg-white/70 hover:scale-105"
             }
           `}
         >
           {item.icon}
         </div>
-        <span className="mt-1">{item.label}</span>
+        <span className={`mt-1 font-medium transition-all duration-200 ${active ? 'font-semibold' : ''}`}>{item.label}</span>
       </Link>
     );
   };
@@ -75,7 +75,7 @@ const AppNav = memo(function AppNav() {
 
   if (role !== "creator") {
     return (
-      <nav className="sticky bottom-0 z-50 backdrop-blur-2xl bg-white/40 border-t border-white/30 shadow-[0_-6px_30px_rgba(0,0,0,0.08)] px-4 py-3">
+      <nav className="sticky bottom-0 z-50 backdrop-blur-2xl bg-white/40 border-t border-white/30 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] px-4 py-3">
         <div className="grid grid-cols-4">{consumerItems.map(renderItem)}</div>
       </nav>
     );
@@ -96,7 +96,7 @@ const AppNav = memo(function AppNav() {
   ];
 
   return (
-    <nav className="sticky bottom-0 z-50 backdrop-blur-2xl bg-white/40 border-t border-white/30 shadow-[0_-6px_30px_rgba(0,0,0,0.08)] px-4 py-3 relative">
+    <nav className="sticky bottom-0 z-50 backdrop-blur-2xl bg-white/40 border-t border-white/30 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] px-4 py-3 relative">
       <div className="grid grid-cols-5 items-center text-center">
         {creatorGrid.map((item, i) =>
           item ? (
@@ -119,8 +119,10 @@ const AppNav = memo(function AppNav() {
           bg-gradient-to-r from-fuchsia-600 to-pink-500
           text-white
           shadow-xl shadow-pink-500/40
-          hover:scale-105 active:scale-95
-          transition-all backdrop-blur-xl
+          hover:scale-105 hover:shadow-2xl hover:shadow-pink-500/50
+          active:scale-95
+          transition-all duration-200
+          backdrop-blur-xl
         "
       >
         <Plus size={34} strokeWidth={2.5} color={"white"} />

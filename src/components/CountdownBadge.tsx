@@ -26,15 +26,15 @@ export default function CountdownBadge({ endAt }: { endAt: string }) {
   return (
     <div
       className="
-        rounded-lg 
-        bg-white/95 
-        px-3 
-        py-1 
-        text-xs 
-        font-semibold 
+        rounded-lg
+        bg-white/95
+        px-3
+        py-1
+        text-xs
+        font-semibold
         shadow-sm
-        whitespace-nowrap      /* <-- IMPORTANT FIX */
-        max-w-none             /* <-- Prevent shrink */
+        whitespace-nowrap
+        max-w-none
       "
     >
       {display === 'Ended' ? 'Auction ended' : display}

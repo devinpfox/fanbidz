@@ -11,18 +11,25 @@ export default function WalletWidget() {
   const [isConsumer, setIsConsumer] = useState<boolean>(false);
   const [showModal, setShowModal] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+
+  // Dragging
   const [isDragging, setIsDragging] = useState(false);
+  const [isDragReady, setIsDragReady] = useState(false); // NEW
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null); // NEW
+
   const [positionY, setPositionY] = useState(() => {
-    // Default to upper section of screen (about 20% from top)
-    if (typeof window !== 'undefined') {
-      return window.innerHeight * 0.2;
-    }
+    if (typeof window !== 'undefined') return window.innerHeight * 0.2;
     return 150;
   });
+
   const [dragStartY, setDragStartY] = useState(0);
   const widgetRef = useRef<HTMLDivElement>(null);
 
-  // Check user role and fetch balance
+  //
+  // ───────────────────────────────────────────────
+  // LOAD USER + WALLET
+  // ───────────────────────────────────────────────
+  //
   useEffect(() => {
     let mounted = true;
     let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -31,7 +38,6 @@ export default function WalletWidget() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !mounted) return;
 
-      // Check if user is a consumer
       const { data: profile } = await supabase
         .from('profiles')
         .select('role')
@@ -41,7 +47,6 @@ export default function WalletWidget() {
       if (mounted && profile?.role === 'consumer') {
         setIsConsumer(true);
 
-        // Fetch wallet balance
         const { data: wallet } = await supabase
           .from('wallets')
           .select('balance')
@@ -50,7 +55,6 @@ export default function WalletWidget() {
 
         if (mounted) setBalance(wallet?.balance ?? 0);
 
-        // Subscribe to balance updates
         channel = supabase
           .channel(`wallet-widget-${user.id}`)
           .on(
@@ -74,71 +78,120 @@ export default function WalletWidget() {
       mounted = false;
       if (channel) supabase.removeChannel(channel);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-const handleTouchStart = (e: React.TouchEvent) => {
-  const touch = e.touches[0];
-  setIsDragging(true);
-  setDragStartY(touch.clientY - positionY);
-};
-  // Drag handlers for vertical movement
+  //
+  // ───────────────────────────────────────────────
+  // LONG PRESS ACTIVATION (MOBILE ONLY)
+  // ───────────────────────────────────────────────
+  //
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+
+    // start long-press timer
+    longPressTimer.current = setTimeout(() => {
+      setIsDragReady(true);
+      setIsDragging(true);
+
+      document.body.style.overflow = "hidden"; // freeze page scroll
+
+      setDragStartY(touch.clientY - positionY);
+    }, 400);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+
+    if (isDragging) {
+      setIsDragging(false);
+      setIsDragReady(false);
+      document.body.style.overflow = ""; // restore scroll
+    }
+  };
+
+  //
+  // ───────────────────────────────────────────────
+  // MOUSE DRAG (DESKTOP)
+  // ───────────────────────────────────────────────
+  //
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsDragging(true);
     setDragStartY(e.clientY - positionY);
   };
 
+  //
+  // ───────────────────────────────────────────────
+  // MOVE WIDGET
+  // ───────────────────────────────────────────────
+  //
   const moveWidget = (newY: number) => {
     const maxY = window.innerHeight - (widgetRef.current?.offsetHeight || 0);
     setPositionY(Math.max(0, Math.min(newY, maxY)));
   };
-  
 
+  //
+  // ───────────────────────────────────────────────
+  // GLOBAL DRAG LISTENERS
+  // ───────────────────────────────────────────────
+  //
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging) return;
       const newY = e.clientY - dragStartY;
       moveWidget(newY);
     };
-  
+
     const handleTouchMove = (e: TouchEvent) => {
-      if (!isDragging) return;
+      if (!isDragging || !isDragReady) return;
+
+      e.preventDefault(); // required to stop page scroll
       const touch = e.touches[0];
       const newY = touch.clientY - dragStartY;
       moveWidget(newY);
     };
-  
-    const handleEnd = () => setIsDragging(false);
-  
+
+    const handleEnd = () => {
+      setIsDragging(false);
+      setIsDragReady(false);
+      document.body.style.overflow = ""; // restore scroll
+    };
+
     if (isDragging) {
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleEnd);
-  
+
       document.addEventListener("touchmove", handleTouchMove, { passive: false });
       document.addEventListener("touchend", handleEnd);
       document.addEventListener("touchcancel", handleEnd);
     }
-  
+
     return () => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleEnd);
-  
+
       document.removeEventListener("touchmove", handleTouchMove);
       document.removeEventListener("touchend", handleEnd);
       document.removeEventListener("touchcancel", handleEnd);
     };
-  }, [isDragging, dragStartY]);
-  
+  }, [isDragging, isDragReady, dragStartY]);
 
-  // Don't render if not a consumer or balance not loaded
+  //
+  // ───────────────────────────────────────────────
+  // EXIT EARLY
+  // ───────────────────────────────────────────────
+  //
   if (!isConsumer || balance === null) return null;
 
   const formattedBalance = new Intl.NumberFormat('en-US').format(balance);
 
+  //
+  // ───────────────────────────────────────────────
+  // RENDER
+  // ───────────────────────────────────────────────
+  //
   return (
     <>
-      {/* Sliding Tab Container */}
       <div
         ref={widgetRef}
         className="wallet-widget-container fixed left-0 z-50 select-none"
@@ -149,6 +202,7 @@ const handleTouchStart = (e: React.TouchEvent) => {
         }}
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
         <div
           className="flex items-center transition-transform duration-300 ease-out"
@@ -156,9 +210,8 @@ const handleTouchStart = (e: React.TouchEvent) => {
             transform: `translateX(${isOpen ? '0' : '-100%'})`,
           }}
         >
-          {/* Main Widget Panel */}
+          {/* MAIN PANEL */}
           <div className="wallet-widget-panel flex items-center gap-3 rounded-r-full bg-white border border-gray-100 shadow-lg pl-5 pr-2 py-2">
-            {/* Left side: Wallet display */}
             <div className="flex flex-col">
               <span className="text-[10px] font-semibold text-gray-400 tracking-[0.12em] uppercase mb-0.5">
                 WALLET
@@ -173,31 +226,20 @@ const handleTouchStart = (e: React.TouchEvent) => {
               </div>
             </div>
 
-            {/* Right side: Add Coins button */}
+            {/* ADD COINS BUTTON */}
             <button
               type="button"
               onClick={() => setShowModal(true)}
               onMouseDown={(e) => e.stopPropagation()}
               className="wallet-add-coins-btn relative flex items-center gap-2 bg-gradient-to-br from-fuchsia-500 via-pink-500 to-rose-500 text-white rounded-[22px] pl-3 pr-4 py-2.5 hover:scale-[1.02] active:scale-95 transition-transform duration-200 cursor-pointer shadow-md"
             >
-              {/* Plus icon circle */}
               <div className="flex items-center justify-center w-9 h-9 rounded-full bg-white/25 border-2 border-white shrink-0">
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="5" x2="12" y2="19"/>
                   <line x1="5" y1="12" x2="19" y2="12"/>
                 </svg>
               </div>
 
-              {/* Button text */}
               <div className="flex flex-col items-start leading-tight">
                 <span className="text-[15px] font-bold leading-none">Add</span>
                 <span className="text-[15px] font-bold leading-none">Coins</span>
@@ -205,80 +247,26 @@ const handleTouchStart = (e: React.TouchEvent) => {
             </button>
           </div>
 
-          {/* Tab Button - positioned absolutely to stick out */}
+          {/* TAB BUTTON */}
           <button
-            onClick={(e) => {
-              // Only toggle if not dragging
-              if (!isDragging) {
-                setIsOpen(!isOpen);
-              }
-            }}
+            onClick={() => !isDragging && setIsOpen(!isOpen)}
             className="wallet-widget-tab absolute left-full top-1/2 -translate-y-1/2 bg-gradient-to-br from-fuchsia-500 via-pink-500 to-rose-500 rounded-r-xl shadow-lg hover:shadow-xl transition-transform duration-200 hover:scale-105 active:scale-95 p-3"
             style={{ cursor: isDragging ? 'grabbing' : 'pointer' }}
             aria-label={isOpen ? 'Close wallet' : 'Open wallet'}
           >
-            {/* Better Coin Icon */}
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              className="opacity-90"
-            >
-              {/* Outer circle with shine effect */}
-              <circle
-                cx="12"
-                cy="12"
-                r="9"
-                fill="white"
-                opacity="0.95"
-              />
-              <circle
-                cx="12"
-                cy="12"
-                r="9"
-                stroke="white"
-                strokeWidth="1.5"
-                fill="none"
-                opacity="0.3"
-              />
-              {/* Inner circle for depth */}
-              <circle
-                cx="12"
-                cy="12"
-                r="7"
-                stroke="white"
-                strokeWidth="1"
-                fill="none"
-                opacity="0.6"
-              />
-              {/* Dollar/Currency symbol */}
-              <text
-                x="12"
-                y="17"
-                fontSize="14"
-                fontWeight="bold"
-                fill="rgba(236, 72, 153, 0.9)"
-                textAnchor="middle"
-                fontFamily="system-ui, -apple-system, sans-serif"
-              >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="opacity-90">
+              <circle cx="12" cy="12" r="9" fill="white" opacity="0.95" />
+              <circle cx="12" cy="12" r="9" stroke="white" strokeWidth="1.5" fill="none" opacity="0.3" />
+              <circle cx="12" cy="12" r="7" stroke="white" strokeWidth="1" fill="none" opacity="0.6" />
+              <text x="12" y="17" fontSize="14" fontWeight="bold" fill="rgba(236, 72, 153, 0.9)" textAnchor="middle" fontFamily="system-ui, -apple-system, sans-serif">
                 $
               </text>
-              {/* Shine effect */}
-              <ellipse
-                cx="9"
-                cy="8"
-                rx="3"
-                ry="2"
-                fill="white"
-                opacity="0.4"
-              />
+              <ellipse cx="9" cy="8" rx="3" ry="2" fill="white" opacity="0.4" />
             </svg>
           </button>
         </div>
       </div>
 
-      {/* Deposit modal */}
       {showModal && (
         <WalletDepositModal
           balance={balance}

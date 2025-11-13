@@ -126,9 +126,9 @@ const PostCard = memo(function PostCard({
         group relative overflow-hidden rounded-[32px]
         bg-white/90
         border border-white/50
-        shadow-[0_8px_30px_rgba(0,0,0,0.04)]
-        hover:shadow-[0_18px_50px_rgba(255,78,207,0.18)]
-        transition-all duration-500 ease-out
+        shadow-[0_4px_16px_rgba(0,0,0,0.04)]
+        hover:shadow-[0_12px_32px_rgba(255,78,207,0.15)]
+        transition-all duration-300 ease-out
         hover:-translate-y-1
       "
     >
@@ -178,7 +178,7 @@ const PostCard = memo(function PostCard({
           <div className="leading-tight space-y-0.5">
             <Link
               href={`/${profile?.username ?? ""}`}
-              className="block font-semibold text-[15px] text-gray-900 tracking-tight hover:text-fuchsia-600 transition-colors"
+              className="block font-semibold text-[15px] text-gray-900 tracking-tight hover:text-fuchsia-600 transition-all duration-200 hover:translate-x-0.5"
             >
               @{profile?.username ?? "user"}
             </Link>
@@ -233,14 +233,17 @@ const PostCard = memo(function PostCard({
                 className="
                   inline-flex items-center shrink-0 rounded-full
                   bg-gradient-to-r from-fuchsia-500 via-pink-500 to-rose-500
-                  text-white text-[10px] font-bold uppercase tracking-wider
-                  px-2.5 py-1 shadow-md shadow-pink-500/30
+                  text-white text-[10px] font-bold uppercase tracking-[0.08em]
+                  px-2.5 py-1
+                  shadow-md shadow-pink-500/25
+                  transition-transform duration-200
+                  hover:scale-105
                 "
               >
                 New
               </span>
             </div>
-            <span className="text-sm font-medium text-gray-400 uppercase tracking-wide mt-1">
+            <span className="text-sm font-medium text-gray-400 uppercase tracking-[0.06em] mt-1">
               {category}
             </span>
           </div>
@@ -296,8 +299,10 @@ const PostCard = memo(function PostCard({
     rounded-2xl px-6 py-3 w-[140px]
     text-white text-base font-semibold
     bg-gradient-to-r from-fuchsia-500 via-pink-500 to-rose-500
-    hover:scale-[1.03] active:scale-95
-    transition-transform
+    shadow-lg shadow-pink-500/25
+    hover:scale-[1.03] hover:shadow-xl hover:shadow-pink-500/30
+    active:scale-95
+    transition-all duration-200
     disabled:opacity-50 disabled:scale-100
   "
 >

@@ -55,34 +55,68 @@ body {
     "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
     "Apple Color Emoji", "Segoe UI Emoji";
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1;
 }
 
-a { color: inherit; }
-a:hover { filter: brightness(0.95); }
+a {
+  color: inherit;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+a:hover {
+  filter: brightness(0.95);
+  transform: translateY(-0.5px);
+}
 
-/* Nice selection color */
-::selection { background: var(--brand-pink); color: #fff; }
+/* Refined selection color */
+::selection {
+  background: var(--brand-pink);
+  color: #fff;
+  text-shadow: none;
+}
 
-/* Accessible focus style aligned to brand */
-:focus-visible { outline: 2px solid var(--brand-pink); outline-offset: 2px; }
+/* Enhanced focus style with subtle glow */
+:focus-visible {
+  outline: 2px solid var(--brand-pink);
+  outline-offset: 2px;
+  transition: outline-offset 0.2s ease;
+}
 
 /* --- Small helpers / utilities ---------------------------------------- */
 
-/* Brand button when you don’t want to compose utilities */
+/* Brand button with enhanced states */
 .btn-primary {
   @apply inline-flex items-center justify-center px-4 py-2 rounded-2xl
-         font-semibold text-white shadow-sm;
-  background: var(--brand-pink);
+         font-semibold text-white;
+  background: linear-gradient(135deg, #ff4ecf 0%, #ff1eb8 100%);
+  box-shadow: 0 2px 8px rgba(255, 78, 207, 0.2);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.btn-primary:hover { filter: brightness(0.97); }
-.btn-primary:disabled { @apply opacity-50 cursor-not-allowed; }
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 78, 207, 0.25);
+}
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(255, 78, 207, 0.15);
+}
+.btn-primary:disabled {
+  @apply opacity-50 cursor-not-allowed;
+  transform: none;
+}
 
-/* Soft brand badge */
+/* Refined brand badge with subtle depth */
 .badge {
-  @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+  @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold;
   background: var(--brand-pink-100);
   color: var(--brand-pink);
+  letter-spacing: 0.025em;
+  transition: all 0.2s ease;
+}
+.badge:hover {
+  background: var(--brand-pink-300);
+  color: white;
 }
 
 /* Hero gradient backdrop (optional, matches your banners) */
@@ -126,5 +160,36 @@ margin-bottom: 5%;
 
 @keyframes pulse-glow {
   0%, 100% { filter: brightness(1); }
-  50% { filter: brightness(1.2); }
+  50% { filter: brightness(1.15); }
+}
+
+/* Enhanced input fields */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+textarea,
+select {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+textarea:focus,
+select:focus {
+  transform: translateY(-1px);
+}
+
+/* Refined placeholder text */
+::placeholder {
+  color: rgb(156, 163, 175);
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+input:focus::placeholder,
+textarea:focus::placeholder {
+  opacity: 0.5;
 }

@@ -35,24 +35,24 @@ const EngagementRow = memo(function EngagementRow({
           hasLiked={hasLiked}
           likeCount={likeCount}
         />
-  
+
         {/* Comment */}
         <button
           type="button"
           aria-label="Open comments"
           onClick={() => setOpen(true)}
-          className="flex items-center gap-1 hover:text-black"
+          className="flex items-center gap-1.5 hover:text-black transition-all duration-200 hover:scale-110 active:scale-95"
         >
           <MessageCircle className="h-6 w-6" />
-          {commentCount > 0 && <span className="text-sm">{commentCount}</span>}
+          {commentCount > 0 && <span className="text-sm font-medium">{commentCount}</span>}
         </button>
-  
+
         {/* Save (bookmark icon only) */}
         <SaveButton
           listingId={listingId}
           userId={currentUserId}
           initialSaved={initialSaved}
-          className="h-6 w-6 text-gray-600 hover:text-black"
+          className="h-6 w-6 text-gray-600 hover:text-black transition-all duration-200 hover:scale-110 active:scale-95"
         />
       </div>
   
@@ -60,7 +60,7 @@ const EngagementRow = memo(function EngagementRow({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="mt-2 text-sm text-gray-700 underline text-left"
+          className="mt-2 text-sm text-gray-700 font-medium underline text-left transition-all duration-200 hover:text-fuchsia-600 hover:translate-x-1"
         >
           View all {commentCount.toLocaleString()} comments
         </button>
