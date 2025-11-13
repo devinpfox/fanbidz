@@ -190,26 +190,27 @@ if (userId) {
         <div className="max-w-3xl mx-auto px-4 pt-8">
           <div className="space-y-10">
             {activeListings.map((listing) => (
-              <PostCard
-                key={listing.id}
-                cover={listing.images?.[0] ?? "https://via.placeholder.com/800"}
-                listingId={listing.id}
-                title={listing.title}
-                datePosted={listing.created_at}
-                category="Sports Shoes"
-                endAt={listing.end_at}
-                sold={listing.sold}
-                profile={listing.profile}
-                currentUserId={userId}
-                likeCount={listing.likeCount}
-                commentCount={listing.commentCount}
-                hasLiked={userLikedSet.has(listing.id)}
-                initialSaved={userSavedSet.has(listing.id)}
-                highestBid={listing.last_bid ?? null}
-                buyNow={listing.buy_now ?? null}
-                showDots
-                showHeaderFollow
-              />
+   <PostCard
+   key={listing.id}
+   images={listing.images ?? undefined}  // 🔥 FULL CAROUSEL ARRAY
+   cover={listing.images?.[0] ?? "https://via.placeholder.com/800"}
+   listingId={listing.id}
+   title={listing.title}
+   datePosted={listing.created_at}
+   category="Sports Shoes"
+   endAt={listing.end_at}
+   sold={listing.sold}
+   profile={listing.profile}
+   currentUserId={userId}
+   likeCount={listing.likeCount}
+   commentCount={listing.commentCount}
+   hasLiked={userLikedSet.has(listing.id)}
+   initialSaved={userSavedSet.has(listing.id)}
+   highestBid={listing.last_bid ?? null}
+   buyNow={listing.buy_now ?? null}
+   showDots
+   showHeaderFollow
+ />
             ))}
           </div>
         </div>
