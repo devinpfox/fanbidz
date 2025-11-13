@@ -32,7 +32,7 @@ export async function POST(
     .from("orders")
     .select("id, buyer_id, shipping")
     .eq("id", params.id)
-    .maybeSingle();
+    .maybeSingle<{ id: string; buyer_id: string; shipping: any }>();
 
   if (getErr) return NextResponse.json({ error: getErr.message }, { status: 500 });
   if (!order || order.buyer_id !== user.id)
