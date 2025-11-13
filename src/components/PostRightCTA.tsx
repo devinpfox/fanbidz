@@ -1,4 +1,3 @@
-// components/PostRightCTA.tsx
 "use client";
 
 import { useState } from "react";
@@ -12,7 +11,7 @@ export default function PostRightCTA({
   buyNow,
   ended,
   category = "Sports Shoes",
-  hideBidButton = false, // New prop
+  hideBidButton = false,
 }: {
   listingId: string;
   userId: string | null;
@@ -20,27 +19,28 @@ export default function PostRightCTA({
   buyNow: number | null;
   ended: boolean;
   category?: string;
-  hideBidButton?: boolean; // New prop interface
+  hideBidButton?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
-  const lastBidAmount = highestBid != null ? `$${highestBid.toFixed(2)}` : null;
-  const buyNowAmount  = buyNow != null ? `$${buyNow.toFixed(2)}` : "—";
-  const lastBidText = highestBid != null ? `$${highestBid.toFixed(2)}` : "—"; // For modal use
+  const lastBidText = highestBid != null ? `$${highestBid.toFixed(2)}` : "—";
 
   return (
-    // Space-y-2 instead of space-y-3 to tighten the last bid/buy now grouping
     <div className="flex flex-col items-end text-right space-y-2 w-full">
-      
-      {/* LAST BID: Aligned to the top of the grid cell */}
+
+      {/* LAST BID */}
       {highestBid !== null && (
         <div className="text-right shrink-0">
-          <div className="text-sm text-gray-500 font-medium">Last Bid</div>
-          <div className="text-xl font-bold text-gray-900">{lastBidAmount}</div>
+          <div className="text-sm text-gray-500 font-medium tracking-wide">
+            Last Bid
+          </div>
+          <div className="text-xl font-semibold text-gray-900 tracking-tight">
+            {lastBidText}
+          </div>
         </div>
       )}
 
-      {/* Buy Now Button - Styled as a black pill button */}
+      {/* BUY NOW */}
       {buyNow != null && (
         <BuyNowButton
           listingId={listingId}
@@ -48,56 +48,85 @@ export default function PostRightCTA({
           userId={userId}
           ended={ended}
           className="
-            w-full max-w-[140px]
-            p-3
-            bg-black
-            text-white text-base font-semibold 
-            rounded-2xl
-            shadow-lg shadow-gray-900/10 
-            hover:bg-gray-800 transition-colors
-            disabled:opacity-50
+            w-full max-w-[140px] px-4 py-3 rounded-2xl
+            bg-gradient-to-b from-black to-gray-900
+            text-white text-base font-semibold
+            shadow-[0_4px_16px_rgba(0,0,0,0.25)]
+            hover:shadow-[0_6px_22px_rgba(0,0,0,0.35)]
+            transition-all duration-300
+            disabled:opacity-50 disabled:cursor-not-allowed
           "
         >
           Buy Now ${buyNow}
         </BuyNowButton>
       )}
 
-      {/* Bid Button (Pink) - RENDERED ONLY IF hideBidButton IS FALSE */}
+      {/* BID BUTTON */}
       {!hideBidButton && (
-          <div className="pt-1">
-            <button
-              type="button"
-              disabled={!userId || ended}
-              onClick={() => setOpen(true)}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[rgb(255,78,207)] px-6 py-3 text-white text-base font-semibold shadow-sm disabled:opacity-50 w-[140px]"
-            >
-              Bid <span aria-hidden>→</span>
-            </button>
-            {(ended || !userId) && (
-              <p className="text-xs text-gray-500 mt-1 text-right">
-                {ended ? "This item is sold." : "Sign in to place a bid."}
-              </p>
-            )}
-          </div>
+        <div className="pt-1">
+          <button
+            type="button"
+            disabled={!userId || ended}
+            onClick={() => setOpen(true)}
+            className="
+              inline-flex items-center justify-center gap-2
+              rounded-2xl px-6 py-3 w-[140px]
+              text-white text-base font-semibold
+              bg-gradient-to-r from-fuchsia-500 via-pink-500 to-rose-500
+              shadow-lg shadow-pink-500/25
+              hover:shadow-pink-500/40 hover:scale-[1.03]
+              active:scale-95
+              transition-all duration-300
+              disabled:opacity-50 disabled:scale-100
+            "
+          >
+            Bid →
+          </button>
+
+          {(ended || !userId) && (
+            <p className="text-xs text-gray-500 mt-1 text-right">
+              {ended ? "This item is sold." : "Sign in to place a bid."}
+            </p>
+          )}
+        </div>
       )}
 
-      {/* Modal/Sheet Content (No change) */}
+      {/* MODAL */}
       {open && (
         <>
-          <div className="fixed inset-0 z-[180] bg-black/40" onClick={() => setOpen(false)} />
+          {/* Fade overlay */}
+          <div
+            className="fixed inset-0 z-[180] bg-black/40"
+            onClick={() => setOpen(false)}
+          />
+
+          {/* Modal card */}
           <div className="fixed inset-x-0 bottom-0 z-[200] sm:inset-0">
             <div
-              className="mx-auto w-full max-w-sm sm:max-w-md sm:mt-24 rounded-t-2xl sm:rounded-2xl bg-white shadow-2xl p-4"
+              className="
+                mx-auto w-full max-w-sm sm:max-w-md
+                sm:mt-24 rounded-t-2xl sm:rounded-2xl
+                bg-white shadow-2xl p-5
+              "
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-base font-semibold">Place a Bid</h3>
-                <button onClick={() => setOpen(false)} className="text-2xl leading-none px-2">×</button>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Place a Bid
+                </h3>
+                <button
+                  onClick={() => setOpen(false)}
+                  className="text-2xl leading-none px-2 text-gray-600 hover:text-gray-900"
+                >
+                  ×
+                </button>
               </div>
+
               <PlaceBid listingId={listingId} userId={userId} />
-              <p className="mt-2 text-xs text-gray-500">
+
+              <p className="mt-3 text-xs text-gray-500">
                 Highest bid: {lastBidText}
-                {buyNow != null && ` · Buy Now: ${buyNowAmount}`}
+                {buyNow != null && ` · Buy Now: $${buyNow.toFixed(2)}`}
               </p>
             </div>
           </div>
