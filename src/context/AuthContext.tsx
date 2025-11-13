@@ -74,7 +74,8 @@ export function AuthProvider({
     });
 
     return () => listener.subscription.unsubscribe();
-  }, [supabase, initialSession, initialProfile]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialSession, initialProfile]);
 
   return (
     <AuthContext.Provider value={{ user, profile, supabase, loading }}>

@@ -12,14 +12,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  // ✅ Redirect if already logged in
+  // Redirect if already logged in
   useEffect(() => {
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession();
-      if (data?.session) router.replace('/'); // redirect to main feed
+      if (data?.session) router.replace('/');
     };
     checkSession();
-  }, [router, supabase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +37,6 @@ export default function LoginPage() {
         const { error } = await supabase.auth.signInWithPassword({ phone: id, password });
         if (error) throw error;
       } else {
-        // Username → email via RPC
         const { data: rpcEmail, error: rpcErr } = await supabase.rpc('get_email_by_username', {
           p_username: id.toLowerCase(),
         });
@@ -55,16 +55,12 @@ export default function LoginPage() {
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session) throw new Error('Login failed');
 
-      // Fetch profile info
-      const { data: profile, error: profileError } = await supabase
+      const { data: profile } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', session.session.user.id)
         .single();
 
-      if (profileError) throw new Error('Profile fetch failed');
-
-      // Redirect to setup if profile incomplete
       if (!profile?.username || !profile?.first_name || !profile?.last_name) {
         router.push('/profile-settings');
       } else {
@@ -77,54 +73,88 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
+    <div
+      className="
+        min-h-screen flex items-center justify-center 
+        bg-gradient-to-br from-pink-50 via-white to-fuchsia-100
+        relative overflow-hidden
+      "
+    >
+      {/* Soft luxury glow behind card */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute w-[600px] h-[600px] bg-pink-300/30 blur-[180px] rounded-full top-[-200px] right-[-150px]" />
+        <div className="absolute w-[500px] h-[500px] bg-fuchsia-400/20 blur-[160px] rounded-full bottom-[-150px] left-[-150px]" />
+      </div>
+
       <form
         onSubmit={handleLogin}
-        className="w-full max-w-sm p-8 bg-white rounded-xl shadow space-y-6"
         autoComplete="off"
+        className="
+          relative w-full max-w-sm 
+          p-10 
+          rounded-3xl 
+          backdrop-blur-xl 
+          bg-white/40
+          border border-white/20
+          shadow-[0_8px_40px_rgba(0,0,0,0.12)]
+          space-y-8
+        "
       >
         {/* Logo */}
-        <div className="flex justify-center">
+        <div className="flex justify-center mb-2">
           <Image
             src="/fanbids-logo.svg"
             alt="Fanbids Logo"
-            width={200}
-            height={60}
+            width={240}
+            height={70}
             priority
+            className="drop-shadow-sm"
           />
         </div>
 
-        {/* Username / Email / Phone input */}
+        {/* Identifier Input */}
         <input
-          className="w-full border border-gray-300 rounded px-4 py-3 text-lg focus:outline-[rgb(255,78,207)]"
+          className="
+            w-full px-4 py-3 text-lg rounded-2xl 
+            bg-white/60 backdrop-blur border border-white/30 
+            shadow-inner 
+            focus:outline-none focus:ring-2 
+            focus:ring-pink-500/40
+          "
           placeholder="Phone number, email, or username"
           value={identifier}
           onChange={(e) => setIdentifier(e.target.value)}
           required
         />
 
-        {/* Password input */}
+        {/* Password */}
         <div className="relative">
           <input
-            className="w-full border border-gray-300 rounded px-4 py-3 text-lg pr-12 focus:outline-[rgb(255,78,207)]"
-            placeholder="Password"
+            className="
+              w-full px-4 py-3 pr-12 text-lg rounded-2xl 
+              bg-white/60 backdrop-blur border border-white/30 
+              shadow-inner 
+              focus:outline-none focus:ring-2 
+              focus:ring-pink-500/40
+            "
             type={showPassword ? 'text' : 'password'}
+            placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
+
           <button
             type="button"
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
+            className="
+              absolute right-4 top-1/2 -translate-y-1/2 
+              text-gray-500 hover:text-gray-700 transition
+            "
             onClick={() => setShowPassword((v) => !v)}
           >
             {showPassword ? (
               <svg width={20} height={20} fill="none" viewBox="0 0 24 24">
-                <path
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  d="M17.94 17.94A10.01 10.01 0 0 1 12 20c-5.523 0-10-7-10-8s4.477-8 10-8a9.97 9.97 0 0 1 5.47 1.61M1 1l22 22"
-                />
+                <path stroke="currentColor" strokeWidth={2} d="M17.94 17.94A10 10 0 0 1 12 20c-5.5 0-10-7-10-8s4.5-8 10-8a10 10 0 0 1 5.47 1.61M1 1l22 22" />
               </svg>
             ) : (
               <svg width={20} height={20} fill="none" viewBox="0 0 24 24">
@@ -135,19 +165,24 @@ export default function LoginPage() {
           </button>
         </div>
 
-        {/* Sign In */}
+        {/* Submit Button */}
         <button
-          className="w-full bg-[rgb(255,78,207)] hover:bg-pink-600 text-white py-3 rounded text-lg font-semibold"
           type="submit"
+          className="
+            w-full py-3 rounded-2xl text-lg font-semibold text-white
+            bg-gradient-to-r from-fuchsia-600 to-pink-500
+            shadow-lg shadow-pink-500/30
+            hover:opacity-90 transition
+          "
         >
           Sign In
         </button>
 
-        {/* Sign Up link */}
-        <div className="text-center text-gray-500 text-base">
+        {/* Sign Up */}
+        <div className="text-center text-gray-700 text-base">
           Don’t have an account?{' '}
           <span
-            className="text-[rgb(255,78,207)] font-medium cursor-pointer"
+            className="text-fuchsia-600 font-semibold cursor-pointer hover:underline"
             onClick={() => router.push('/signup')}
           >
             Sign Up

@@ -63,7 +63,8 @@ export default function Comments({
       alive = false;
       supabase.removeChannel(channel);
     };
-  }, [listingId, supabase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listingId]);
 
   async function send() {
     const body = text.trim();

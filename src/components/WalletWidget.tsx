@@ -74,7 +74,8 @@ export default function WalletWidget() {
       mounted = false;
       if (channel) supabase.removeChannel(channel);
     };
-  }, [supabase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Drag handlers for vertical movement
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -156,7 +157,7 @@ export default function WalletWidget() {
               type="button"
               onClick={() => setShowModal(true)}
               onMouseDown={(e) => e.stopPropagation()}
-              className="wallet-add-coins-btn relative flex items-center gap-2 bg-gradient-to-br from-fuchsia-500 via-pink-500 to-rose-500 text-white rounded-[22px] pl-3 pr-4 py-2.5 hover:scale-[1.02] active:scale-95 transition-all duration-200 cursor-pointer shadow-md"
+              className="wallet-add-coins-btn relative flex items-center gap-2 bg-gradient-to-br from-fuchsia-500 via-pink-500 to-rose-500 text-white rounded-[22px] pl-3 pr-4 py-2.5 hover:scale-[1.02] active:scale-95 transition-transform duration-200 cursor-pointer shadow-md"
             >
               {/* Plus icon circle */}
               <div className="flex items-center justify-center w-9 h-9 rounded-full bg-white/25 border-2 border-white shrink-0">
@@ -191,7 +192,7 @@ export default function WalletWidget() {
                 setIsOpen(!isOpen);
               }
             }}
-            className="wallet-widget-tab absolute left-full top-1/2 -translate-y-1/2 bg-gradient-to-br from-fuchsia-500 via-pink-500 to-rose-500 rounded-r-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 p-3"
+            className="wallet-widget-tab absolute left-full top-1/2 -translate-y-1/2 bg-gradient-to-br from-fuchsia-500 via-pink-500 to-rose-500 rounded-r-xl shadow-lg hover:shadow-xl transition-transform duration-200 hover:scale-105 active:scale-95 p-3"
             style={{ cursor: isDragging ? 'grabbing' : 'pointer' }}
             aria-label={isOpen ? 'Close wallet' : 'Open wallet'}
           >

@@ -70,7 +70,8 @@ export default function CommentSheet({
       alive = false;
       supabase.removeChannel(channel);
     };
-  }, [listingId, supabase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listingId]);
 
   async function send(e?: React.FormEvent) {
     e?.preventDefault();

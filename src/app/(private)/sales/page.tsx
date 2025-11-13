@@ -150,7 +150,7 @@ export default async function SalesPage({
                   backdrop-blur-xl bg-white/70
                   rounded-2xl border border-white/20
                   shadow-md shadow-black/5
-                  p-4 transition-all hover:shadow-xl hover:shadow-pink-500/20
+                  p-4 transition-shadow duration-300 hover:shadow-xl hover:shadow-pink-500/20
                 "
               >
                 <img

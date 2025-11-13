@@ -24,7 +24,19 @@ export default function CountdownBadge({ endAt }: { endAt: string }) {
   const display = formatTimeLeft(msRemaining);
 
   return (
-    <div className="absolute top-3 left-3 rounded-lg bg-white/95 px-3 py-1 text-xs font-semibold shadow-sm">
+    <div
+      className="
+        rounded-lg 
+        bg-white/95 
+        px-3 
+        py-1 
+        text-xs 
+        font-semibold 
+        shadow-sm
+        whitespace-nowrap      /* <-- IMPORTANT FIX */
+        max-w-none             /* <-- Prevent shrink */
+      "
+    >
       {display === 'Ended' ? 'Auction ended' : display}
     </div>
   );

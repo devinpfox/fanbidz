@@ -22,7 +22,8 @@ export default function CommentsLauncher({
   useEffect(() => {
     if (userId !== undefined) return;
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
-  }, [supabase, userId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   return (
     <>

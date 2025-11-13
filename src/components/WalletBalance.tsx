@@ -46,7 +46,8 @@ export default function WalletBalance({ className = "" }: { className?: string }
       mounted = false;
       if (channel) supabase.removeChannel(channel);
     };
-  }, [supabase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (coins === null) return <span className={className}>Balance: …</span>;
   return <span className={className}>Balance: {coins} coins</span>;

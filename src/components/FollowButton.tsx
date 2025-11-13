@@ -32,7 +32,8 @@ const FollowButton = memo(function FollowButton({ profileId }: FollowButtonProps
     };
 
     checkFollowStatus();
-  }, [profileId, user, supabase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileId, user?.id]);
 
   const handleClick = async () => {
     if (!user?.id) return;

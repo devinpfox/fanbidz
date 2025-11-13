@@ -87,9 +87,10 @@ export default function ProfileSettingsPage() {
         setLoading(false);
       }
     };
-    
+
     loadProfile();
-  }, [supabase, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router]);
 
   /* ---------- Cleanup preview URLs on unmount ---------- */
   useEffect(() => {
@@ -252,7 +253,7 @@ export default function ProfileSettingsPage() {
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/80 hover:bg-white shadow-sm transition-all hover:scale-105 active:scale-95"
+                className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/80 hover:bg-white shadow-sm transition-transform duration-200 hover:scale-105 active:scale-95"
                 aria-label="Back"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -265,7 +266,7 @@ export default function ProfileSettingsPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="px-5 py-2 rounded-xl bg-gradient-to-r from-fuchsia-500 to-pink-500 text-white font-semibold shadow-lg shadow-pink-500/25 hover:shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 transition-all"
+                className="px-5 py-2 rounded-xl bg-gradient-to-r from-fuchsia-500 to-pink-500 text-white font-semibold shadow-lg shadow-pink-500/25 hover:shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 transition-transform duration-200"
               >
                 {saving ? "Saving…" : "Save"}
               </button>
@@ -302,7 +303,7 @@ export default function ProfileSettingsPage() {
                     type="button"
                     onClick={() => fileRef.current?.click()}
                     disabled={uploading}
-                    className="absolute bottom-0 right-0 p-3 bg-gradient-to-br from-fuchsia-500 to-pink-500 rounded-full text-white shadow-lg shadow-pink-500/30 hover:shadow-xl hover:scale-110 active:scale-95 disabled:opacity-50 disabled:scale-100 transition-all"
+                    className="absolute bottom-0 right-0 p-3 bg-gradient-to-br from-fuchsia-500 to-pink-500 rounded-full text-white shadow-lg shadow-pink-500/30 hover:shadow-xl hover:scale-110 active:scale-95 disabled:opacity-50 disabled:scale-100 transition-transform duration-200"
                   >
                     {uploading ? (
                       <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -407,7 +408,7 @@ export default function ProfileSettingsPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="w-full h-14 rounded-2xl bg-gradient-to-r from-fuchsia-500 via-pink-500 to-rose-500 text-white font-bold text-base shadow-xl shadow-pink-500/30 hover:shadow-2xl hover:shadow-pink-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:scale-100 transition-all relative overflow-hidden group"
+                className="w-full h-14 rounded-2xl bg-gradient-to-r from-fuchsia-500 via-pink-500 to-rose-500 text-white font-bold text-base shadow-xl shadow-pink-500/30 hover:shadow-2xl hover:shadow-pink-500/40 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:scale-100 transition-transform duration-200 relative overflow-hidden group"
               >
                 <span className="relative z-10">{saving ? "Saving Changes..." : "Continue"}</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-pink-600 to-rose-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
