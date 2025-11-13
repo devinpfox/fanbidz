@@ -44,15 +44,20 @@ export default async function HomePage() {
   const userId = user?.id ?? null;
 
   // ---- First Time Flow (NOW TYPE-SAFE!) ----
-  let showTutorial = false;
+// ---- First Time Flow (NOW TYPE-SAFE!) ----
+let showTutorial = false;
 
-  if (userId) {
-    const { data: profile } = await supabase
+if (userId) {
+  const { data: profile } = await supabase
     .from("profiles")
     .select("first_time, role")
     .eq("id", userId)
     .single<FirstTimeProfile>();
+
+  if (profile?.first_time === true) {
+    showTutorial = true;
   }
+}
 
   // ---- Listings with Profile Join ----
   const { data: listRows, error } = await supabase

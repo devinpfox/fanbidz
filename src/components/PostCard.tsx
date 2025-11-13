@@ -136,32 +136,10 @@ const PostCard = memo(function PostCard({
             >
               @{profile?.username ?? "user"}
             </Link>
-            <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-              {category}
-            </div>
+         
           </div>
         </div>
-  
-        {/* Follow button */}
-        {showHeaderFollow && (
-          <button
-            type="button"
-            className="
-              relative overflow-hidden px-5 py-2
-              text-sm font-semibold rounded-full text-white
-              bg-gradient-to-r from-fuchsia-500 via-pink-500 to-rose-500
-              shadow-lg shadow-pink-500/30
-              hover:shadow-xl hover:shadow-pink-500/40
-              hover:scale-105 active:scale-95
-              transition-all duration-300
-              before:absolute before:inset-0
-              before:bg-gradient-to-r before:from-fuchsia-600 before:via-pink-600 before:to-rose-600
-              before:opacity-0 hover:before:opacity-100 before:transition-opacity
-            "
-          >
-            <span className="relative z-10">Follow</span>
-          </button>
-        )}
+ 
       </div>
   
       {/* Media */}

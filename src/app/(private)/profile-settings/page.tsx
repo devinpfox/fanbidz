@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import type { Database, Tables, TablesUpdate } from "../../../../types/supabase";
+import type { Database, Tables, TablesUpdate } from "@/types/supabase";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AccountTypePicker, { Role } from "../api/settings/AccountTypePicker";
 
@@ -38,7 +38,8 @@ export default function ProfileSettingsPage() {
   const [inviteCode, setInviteCode] = useState("");
   const [role, setRole] = useState<Role | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  
+  const [isProfileComplete, setIsProfileComplete] = useState(true);
+
   const fileRef = useRef<HTMLInputElement>(null);
   const previewUrlRef = useRef<string | null>(null);
 
@@ -60,26 +61,35 @@ export default function ProfileSettingsPage() {
         setUserId(user.id);
         
         const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+
         if (profileError) {
-          console.error("Error loading profile:", profileError.message);
-          setError("Failed to load profile. Please try again.");
-          setLoading(false);
-          return;
-        }
-        
-        if (profile) {
-          const nameFromParts = [profile.first_name, profile.last_name]
-            .filter(Boolean)
-            .join(" ");
-          setFullName(profile.full_name || profile.display_name || nameFromParts || "");
-          setUsername(profile.username || "");
-          setBio(profile.bio || "");
-          setWebsite(profile.website || "");
-          setAvatarUrl(profile.avatar || null);
-          setRole(profile.role === "creator" ? "creator" : "consumer");
-        }
+  console.error("Error loading profile:", profileError.message);
+  setError("Failed to load profile. Please try again.");
+  setLoading(false);
+  return;
+}
+
+if (profile) {
+  const nameFromParts = [profile.first_name, profile.last_name]
+    .filter(Boolean)
+    .join(" ");
+  setFullName(profile.full_name || profile.display_name || nameFromParts || "");
+  setUsername(profile.username || "");
+  setBio(profile.bio || "");
+  setWebsite(profile.website || "");
+  setAvatarUrl(profile.avatar || null);
+  setRole(profile.role === "creator" ? "creator" : "consumer");
+
+  // Check if profile is complete (has required fields)
+  const hasUsername = Boolean(profile.username?.trim());
+  const hasName = Boolean(profile.first_name?.trim() || profile.full_name?.trim());
+  setIsProfileComplete(hasUsername && hasName);
+}
+
       } catch (err) {
         console.error("Unexpected error loading profile:", err);
         setError("An unexpected error occurred. Please try again.");
@@ -173,13 +183,18 @@ export default function ProfileSettingsPage() {
   /* ---------- Save Profile ---------- */
   const submitProfile = async () => {
     if (!userId) return;
-    
-    // Validate username
+
+    // Validate required fields
     if (!username.trim()) {
       setError("Username is required.");
       return;
     }
-    
+
+    if (!fullName.trim()) {
+      setError("Full name is required.");
+      return;
+    }
+
     setSaving(true);
     setError(null);
     
@@ -217,7 +232,10 @@ export default function ProfileSettingsPage() {
       .eq("id", userId);
       
       if (updateError) throw updateError;
-      
+
+      // Mark profile as complete
+      setIsProfileComplete(true);
+
       // Successfully saved
       router.push("/");
     } catch (err: any) {
@@ -252,8 +270,9 @@ export default function ProfileSettingsPage() {
             <div className="flex items-center justify-between px-6 h-16">
               <button
                 type="button"
-                onClick={() => router.back()}
-                className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/80 hover:bg-white shadow-sm transition-transform duration-200 hover:scale-105 active:scale-95"
+                onClick={() => !isProfileComplete ? null : router.back()}
+                disabled={!isProfileComplete}
+                className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/80 hover:bg-white shadow-sm transition-transform duration-200 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed disabled:scale-100"
                 aria-label="Back"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -261,7 +280,7 @@ export default function ProfileSettingsPage() {
                 </svg>
               </button>
               <h1 className="text-lg font-bold bg-gradient-to-r from-fuchsia-600 to-pink-600 bg-clip-text text-transparent">
-                Edit Profile
+                {isProfileComplete ? "Edit Profile" : "Complete Your Profile"}
               </h1>
               <button
                 type="submit"
@@ -274,6 +293,15 @@ export default function ProfileSettingsPage() {
           </div>
 
           <div className="px-6 py-8">
+            {/* Profile Setup Notice */}
+            {!isProfileComplete && (
+              <div className="mb-6 p-4 bg-gradient-to-r from-fuchsia-50 to-pink-50 border border-fuchsia-200 rounded-2xl backdrop-blur-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                <p className="text-sm text-fuchsia-900 font-medium">
+                  Welcome! Please complete your profile to get started. Username and full name are required.
+                </p>
+              </div>
+            )}
+
             {/* Error Message */}
             {error && (
               <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-2xl backdrop-blur-sm animate-in fade-in slide-in-from-top-2 duration-300">
@@ -337,18 +365,23 @@ export default function ProfileSettingsPage() {
                 <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4 px-1">Personal Information</h2>
                 <div className="backdrop-blur-xl bg-white/80 rounded-3xl shadow-xl shadow-black/5 border border-white/20 overflow-hidden">
                   <label className="flex items-center justify-between px-6 py-4 border-b border-gray-100/50 hover:bg-white/50 transition-colors group">
-                    <span className="text-sm font-medium text-gray-600 group-hover:text-gray-900 transition-colors">Full Name</span>
+                    <span className="text-sm font-medium text-gray-600 group-hover:text-gray-900 transition-colors">
+                      Full Name <span className="text-pink-500">*</span>
+                    </span>
                     <input
                       type="text"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="John Doe"
                       className="w-1/2 text-right bg-transparent outline-none placeholder:text-gray-300 text-gray-900 font-medium"
+                      required
                     />
                   </label>
 
                   <label className="flex items-center justify-between px-6 py-4 border-b border-gray-100/50 hover:bg-white/50 transition-colors group">
-                    <span className="text-sm font-medium text-gray-600 group-hover:text-gray-900 transition-colors">Username</span>
+                    <span className="text-sm font-medium text-gray-600 group-hover:text-gray-900 transition-colors">
+                      Username <span className="text-pink-500">*</span>
+                    </span>
                     <input
                       type="text"
                       value={username}
