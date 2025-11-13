@@ -393,46 +393,49 @@ useEffect(() => {
   };
 
   // Render spotlight on target element
-  const renderSpotlight = () => {
-    if (!step.targetSelector) return null;
+// Render spotlight with mobile-safe rect measurement
+const renderSpotlight = () => {
+  if (!step.targetSelector) return null;
 
-    const element = document.querySelector(step.targetSelector);
-    if (!element) return null;
+  const el = document.querySelector(step.targetSelector);
+  if (!el) return null;
 
-    const rect = element.getBoundingClientRect();
-    const padding = 8;
+  const rect = el.getBoundingClientRect();
 
-    return (
-      <>
-        {/* Dark overlay with cutout effect using box-shadow */}
-        <div
-          className="absolute border-4 border-white rounded-xl transition-all duration-300"
-          style={{
-            top: rect.top - padding,
-            left: rect.left - padding,
-            width: rect.width + padding * 2,
-            height: rect.height + padding * 2,
-            boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.75)',
-            pointerEvents: 'none',
-            zIndex: 171,
-          }}
-        />
-        {/* Glowing effect around highlighted element */}
-        <div
-          className="absolute rounded-xl transition-all duration-300"
-          style={{
-            top: rect.top - padding - 4,
-            left: rect.left - padding - 4,
-            width: rect.width + padding * 2 + 8,
-            height: rect.height + padding * 2 + 8,
-            boxShadow: '0 0 20px 4px rgba(255, 255, 255, 0.3)',
-            pointerEvents: 'none',
-            zIndex: 170,
-          }}
-        />
-      </>
-    );
-  };
+  // If Safari hasn't finished layout yet, skip spotlight
+  if (!rect || rect.width === 0 || rect.height === 0) return null;
+
+  const padding = 8;
+
+  return (
+    <>
+      <div
+        className="absolute border-4 border-white rounded-xl transition-all duration-300"
+        style={{
+          top: rect.top - padding,
+          left: rect.left - padding,
+          width: rect.width + padding * 2,
+          height: rect.height + padding * 2,
+          boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.75)',
+          pointerEvents: 'none',
+          zIndex: 171,
+        }}
+      />
+      <div
+        className="absolute rounded-xl transition-all duration-300"
+        style={{
+          top: rect.top - padding - 4,
+          left: rect.left - padding - 4,
+          width: rect.width + padding * 2 + 8,
+          height: rect.height + padding * 2 + 8,
+          boxShadow: '0 0 20px 4px rgba(255, 255, 255, 0.3)',
+          pointerEvents: 'none',
+          zIndex: 170,
+        }}
+      />
+    </>
+  );
+};
 
   return (
     <div
