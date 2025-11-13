@@ -25,7 +25,7 @@ export default function WalletTutorial({ onComplete }: WalletTutorialProps) {
 
   const steps = [
     {
-      title: "Welcome to JustBidz!",
+      title: "Welcome to Fanbids!",
       description: "To purchase items, you need coins. 1 coin = $1. Let's show you how to add them!",
       targetSelector: null,
       centered: true,
