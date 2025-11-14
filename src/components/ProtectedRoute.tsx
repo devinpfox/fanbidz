@@ -14,38 +14,26 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   const isProfileSettingsRoute = pathname === "/profile-settings";
 
   useEffect(() => {
+    // 🚨 Stop everything until AuthContext finishes loading user + profile
     if (loading) return;
 
-    // Redirect to login if not authenticated
-    if (!user && !isPublicRoute) {
+    // PUBLIC ROUTES ❇️
+    if (isPublicRoute) return;
+
+    // NOT LOGGED IN → redirect to /login
+    if (!user) {
       router.replace("/login");
       return;
     }
 
-    // Check if profile is complete (has required fields)
-    if (user && profile && !isPublicRoute && !isProfileSettingsRoute) {
-      const isProfileComplete =
-        profile.username?.trim() &&
-        (profile.first_name?.trim() || profile.full_name?.trim());
+    // Profile completion is no longer enforced here
+    // Users can access the app without a complete profile
+    // Specific actions (e.g., buying) will redirect to profile-settings as needed
+  }, [user, profile, loading, pathname, router]);
 
-      if (!isProfileComplete) {
-        router.replace("/profile-settings");
-      }
-    }
-  }, [user, profile, loading, isPublicRoute, isProfileSettingsRoute, router]);
-
-  // ✅ render immediately if user exists (even if loading)
-  if (user || isPublicRoute) {
-    return <>{children}</>;
-  }
-
-  // ✅ while loading, render nothing (don't block)
+  // Loading state: render nothing to avoid flicker
   if (loading) return null;
 
-  // ✅ if not logged in and on protected route, redirecting message (optional)
-  return (
-    <div className="p-6 text-center text-gray-600">
-      Redirecting to login...
-    </div>
-  );
+  // Authenticated or public route: render app
+  return <>{children}</>;
 }

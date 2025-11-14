@@ -12,6 +12,7 @@ type AuthContextType = {
   profile: Profile | null;
   loading: boolean;
   supabase: SupabaseClient<Database, any>;
+  refreshProfile: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -28,29 +29,37 @@ export function AuthProvider({
   const supabase = useSupabaseClient<Database>();
   const [user, setUser] = useState(initialSession?.user ?? null);
   const [profile, setProfile] = useState<Profile | null>(initialProfile);
-  const [loading, setLoading] = useState(!initialSession);
+  const [loading, setLoading] = useState(true);
+
+  // Extract loadProfile so we can reuse it
+  const loadProfile = async (uid: string) => {
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", uid)
+      .single();
+    setProfile(profileData);
+    return profileData;
+  };
+
+  // Add refreshProfile method
+  const refreshProfile = async () => {
+    if (!user?.id) return;
+    await loadProfile(user.id);
+  };
 
   useEffect(() => {
-    const loadProfile = async (uid: string) => {
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", uid)
-        .single();
-      setProfile(profileData);
-    };
-
-    // If we have initialSession and initialProfile, we're done loading immediately
+    // If we have both initialSession and initialProfile, we're fully loaded
     if (initialSession?.user && initialProfile) {
       setLoading(false);
       return;
     }
 
-    // If we have initialSession but no initialProfile, load profile only
+    // If we have initialSession but no initialProfile, load profile then set loading false
     if (initialSession?.user && !initialProfile) {
       loadProfile(initialSession.user.id).finally(() => setLoading(false));
     }
-    // If we have no initialSession, get session and profile
+    // If we have no initialSession, get session and profile, then set loading false
     else if (!initialSession) {
       const getSessionAndProfile = async () => {
         const { data: { session } } = await supabase.auth.getSession();
@@ -67,10 +76,13 @@ export function AuthProvider({
       getSessionAndProfile();
     }
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user || null);
-      if (session?.user) loadProfile(session.user.id);
-      else setProfile(null);
+      if (session?.user) {
+        await loadProfile(session.user.id);
+      } else {
+        setProfile(null);
+      }
     });
 
     return () => listener.subscription.unsubscribe();
@@ -78,7 +90,7 @@ export function AuthProvider({
   }, [initialSession, initialProfile]);
 
   return (
-    <AuthContext.Provider value={{ user, profile, supabase, loading }}>
+    <AuthContext.Provider value={{ user, profile, supabase, loading, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

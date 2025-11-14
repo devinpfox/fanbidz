@@ -2,7 +2,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import type { Database, Tables, TablesUpdate } from "@/types/supabase";
+import type { Database, Tables } from "@/types/supabase";
+import SignOutButton from "@/components/SignOutButton";
+import { useAuth } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AccountTypePicker, { Role } from "../api/settings/AccountTypePicker";
 
@@ -24,12 +26,14 @@ function CameraIcon({ className = "w-4 h-4" }: { className?: string }) {
 export default function ProfileSettingsPage() {
   const supabase = createClientComponentClient<Database>() as any;
   const router = useRouter();
-  
+
+  const { profile: authProfile, refreshProfile } = useAuth();
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [userId, setUserId] = useState<string | null>(null);
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
@@ -38,7 +42,7 @@ export default function ProfileSettingsPage() {
   const [inviteCode, setInviteCode] = useState("");
   const [role, setRole] = useState<Role | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [isProfileComplete, setIsProfileComplete] = useState(true);
+  const [isProfileComplete, setIsProfileComplete] = useState(false);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const previewUrlRef = useRef<string | null>(null);
@@ -52,14 +56,14 @@ export default function ProfileSettingsPage() {
         const {
           data: { user },
         } = await supabase.auth.getUser();
-        
+
         if (!user) {
           router.push("/login");
           return;
         }
-        
+
         setUserId(user.id);
-        
+
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("*")
@@ -67,29 +71,32 @@ export default function ProfileSettingsPage() {
           .single();
 
         if (profileError) {
-  console.error("Error loading profile:", profileError.message);
-  setError("Failed to load profile. Please try again.");
-  setLoading(false);
-  return;
-}
+          console.error("Error loading profile:", profileError.message);
+          setError("Failed to load profile. Please try again.");
+          setLoading(false);
+          return;
+        }
 
-if (profile) {
-  const nameFromParts = [profile.first_name, profile.last_name]
-    .filter(Boolean)
-    .join(" ");
-  setFullName(profile.full_name || profile.display_name || nameFromParts || "");
-  setUsername(profile.username || "");
-  setBio(profile.bio || "");
-  setWebsite(profile.website || "");
-  setAvatarUrl(profile.avatar || null);
-  setRole(profile.role === "creator" ? "creator" : "consumer");
+        if (profile) {
+          const nameFromParts = [profile.first_name, profile.last_name]
+            .filter(Boolean)
+            .join(" ");
 
-  // Check if profile is complete (has required fields)
-  const hasUsername = Boolean(profile.username?.trim());
-  const hasName = Boolean(profile.first_name?.trim() || profile.full_name?.trim());
-  setIsProfileComplete(hasUsername && hasName);
-}
+          setFullName(
+            profile.full_name || profile.display_name || nameFromParts || ""
+          );
+          setUsername(profile.username || "");
+          setBio(profile.bio || "");
+          setWebsite(profile.website || "");
+          setAvatarUrl(profile.avatar || null);
+          setRole(profile.role === "creator" ? "creator" : "consumer");
 
+          const hasUsername = Boolean(profile.username?.trim());
+          const hasName = Boolean(
+            profile.first_name?.trim() || profile.full_name?.trim()
+          );
+          setIsProfileComplete(hasUsername && hasName);
+        }
       } catch (err) {
         console.error("Unexpected error loading profile:", err);
         setError("An unexpected error occurred. Please try again.");
@@ -99,8 +106,7 @@ if (profile) {
     };
 
     loadProfile();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router]);
+  }, [router, supabase]);
 
   /* ---------- Cleanup preview URLs on unmount ---------- */
   useEffect(() => {
@@ -112,67 +118,65 @@ if (profile) {
   }, []);
 
   /* ---------- Handle Avatar Upload ---------- */
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const inputEl = e.currentTarget;
     const file = inputEl.files?.[0];
-    
+
     if (!userId || !file) return;
-    
+
     if (!file.type.startsWith("image/")) {
       setError("Please upload an image file.");
       return;
     }
-    
+
     if (file.size > 5 * 1024 * 1024) {
       setError("Please select an image under 5MB.");
       return;
     }
-    
-    // Store previous avatar for rollback
+
     const previousAvatar = avatarUrl;
-    
-    // Revoke previous preview URL if it exists
+
     if (previewUrlRef.current) {
       URL.revokeObjectURL(previewUrlRef.current);
     }
-    
+
     try {
       setUploading(true);
       setError(null);
-      
-      // Create preview URL
+
       const previewUrl = URL.createObjectURL(file);
       previewUrlRef.current = previewUrl;
       setAvatarUrl(previewUrl);
-      
+
       const ext = file.name.split(".").pop() || "jpg";
       const filePath = `${userId}/${Date.now()}.${ext}`;
-      
+
       const { error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(filePath, file, { cacheControl: "3600", upsert: true });
-      
+
       if (uploadError) throw uploadError;
-      
-      const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
+
+      const { data } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(filePath);
       const publicUrl = data.publicUrl;
-      
-      // Type-safe update
-      const { error: updateError } = await (supabase as any)
-      .from("profiles")
-      .update({ avatar: publicUrl })
-      .eq("id", userId);
-      
+
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ avatar: publicUrl })
+        .eq("id", userId);
+
       if (updateError) throw updateError;
-      
-      // Clean up preview URL and set final URL
+
       URL.revokeObjectURL(previewUrl);
       previewUrlRef.current = null;
       setAvatarUrl(publicUrl);
     } catch (err) {
       console.error("Error uploading avatar:", err);
       setError("Failed to upload avatar. Please try again.");
-      // Revert to previous avatar on error
       setAvatarUrl(previousAvatar);
     } finally {
       setUploading(false);
@@ -184,7 +188,6 @@ if (profile) {
   const submitProfile = async () => {
     if (!userId) return;
 
-    // Validate required fields
     if (!username.trim()) {
       setError("Username is required.");
       return;
@@ -195,55 +198,78 @@ if (profile) {
       return;
     }
 
+    // Track if profile was incomplete BEFORE this save
+    const wasIncomplete = !isProfileComplete;
+
     setSaving(true);
     setError(null);
-    
+
     try {
-      // Parse name properly
+      // First, check if the username is already taken by someone else
+      const { data: existingProfile, error: checkError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("username", username.trim())
+        .not("id", "eq", userId) // Exclude the current user from the check
+        .single();
+
+      // Don't throw an error if the query returns 0 rows (PGRST116), that's the happy path.
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw new Error(checkError.message);
+      }
+
+      if (existingProfile) {
+        setError("Username is already taken. Please choose another.");
+        setSaving(false);
+        return;
+      }
+
       const nameParts = fullName.trim().split(/\s+/).filter(Boolean);
       const first_name = nameParts[0] || null;
       const last_name = nameParts.slice(1).join(" ") || null;
-      
-      // Build payload - construct it conditionally to avoid type issues
-      type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
+
+      type ProfileUpdate =
+        Database["public"]["Tables"]["profiles"]["Update"];
 
       const payload: ProfileUpdate = {};
-      
+
       payload.username = username.trim();
-      
-      if (fullName.trim()) {
-        payload.full_name = fullName.trim();
-        payload.display_name = fullName.trim();
-      } else {
-        payload.full_name = null;
-        payload.display_name = null;
-      }
-      
+      payload.full_name = fullName.trim();
+      payload.display_name = fullName.trim();
       payload.first_name = first_name;
       payload.last_name = last_name;
       payload.bio = bio.trim() || null;
       payload.website = website.trim() || null;
       payload.role = role ?? "consumer";
       payload.invite_code = inviteCode.trim() || null;
-      
+
       const { error: updateError } = await supabase
-      .from("profiles")
-      .update(payload)
-      .eq("id", userId);
-      
+        .from("profiles")
+        .update(payload)
+        .eq("id", userId);
+
       if (updateError) throw updateError;
 
-      // Mark profile as complete
+      // Profile is now complete (we validated username and fullName above)
+      const isNowComplete = true;
       setIsProfileComplete(true);
 
-      // ✅ Refresh to update AuthContext with new profile data
-      router.refresh();
+      // Refresh the AuthContext profile to ensure it's synced
+      await refreshProfile();
 
-      // Successfully saved - navigate after refresh completes
-      router.push("/");
+      // Only redirect if this save completed an incomplete profile
+      if (wasIncomplete && isNowComplete) {
+        // Hard refresh to homepage to ensure all components reload with new profile state
+        window.location.href = "/";
+      } else {
+        // Just refresh current page data if editing an already-complete profile
+        router.refresh();
+      }
     } catch (err: any) {
       console.error("Error saving profile:", err);
-      setError(err?.message || "Failed to save profile. Please try again.");
+      setError(
+        err?.message || "Failed to save profile. Please try again."
+      );
     } finally {
       setSaving(false);
     }
@@ -257,7 +283,6 @@ if (profile) {
     );
   }
 
-  /* ---------- UI ---------- */
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-pink-50/30 to-purple-50/20">
@@ -273,9 +298,8 @@ if (profile) {
             <div className="flex items-center justify-between px-6 h-16">
               <button
                 type="button"
-                onClick={() => !isProfileComplete ? null : router.back()}
-                disabled={!isProfileComplete}
-                className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/80 hover:bg-white shadow-sm transition-transform duration-200 hover:scale-105 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed disabled:scale-100"
+                onClick={() => router.back()}
+                className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/80 hover:bg-white shadow-sm transition-transform duration-200 hover:scale-105 active:scale-95"
                 aria-label="Back"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -300,7 +324,7 @@ if (profile) {
             {!isProfileComplete && (
               <div className="mb-6 p-4 bg-gradient-to-r from-fuchsia-50 to-pink-50 border border-fuchsia-200 rounded-2xl backdrop-blur-sm animate-in fade-in slide-in-from-top-2 duration-300">
                 <p className="text-sm text-fuchsia-900 font-medium">
-                  Welcome! Please complete your profile to get started. Username and full name are required.
+                  Complete your profile to unlock all features. Username and full name are required for transactions.
                 </p>
               </div>
             )}
@@ -457,35 +481,5 @@ if (profile) {
         </form>
       </div>
     </ProtectedRoute>
-  );
-}
-
-/* ---------- Sign Out Button ---------- */
-function SignOutButton() {
-  const supabase = createClientComponentClient<Database>();
-  const router = useRouter();
-  const [signingOut, setSigningOut] = useState(false);
-
-  const handleSignOut = async () => {
-    setSigningOut(true);
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error("Error signing out:", error.message);
-      setSigningOut(false);
-    } else {
-      router.replace("/login");
-      router.refresh();
-    }
-  };
-
-  return (
-    <button
-      type="button"
-      onClick={handleSignOut}
-      disabled={signingOut}
-      className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg disabled:opacity-50"
-    >
-      {signingOut ? "Signing out…" : "Sign Out"}
-    </button>
   );
 }
