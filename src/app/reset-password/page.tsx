@@ -5,77 +5,64 @@ import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Image from 'next/image';
 
-export default function LoginPage() {
+export default function ResetPasswordPage() {
   const router = useRouter();
   const supabase = createClientComponentClient();
-  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
-  // Redirect if already logged in
   useEffect(() => {
+    // Check if we have a valid session from the reset link
     const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data?.session) router.replace('/');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError('Invalid or expired reset link. Please request a new one.');
+      }
     };
     checkSession();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router]);
+  }, [supabase.auth]);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    const id = identifier.trim();
-    const isEmail = /\S+@\S+\.\S+/.test(id);
-    const isPhone = /^\+?[0-9\s\-().]{7,}$/.test(id);
+    setError('');
+    setMessage('');
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
+    setLoading(true);
 
     try {
-      let emailToUse: string | null = null;
+      const { error } = await supabase.auth.updateUser({ password });
 
-      if (isEmail) {
-        emailToUse = id;
-      } else if (isPhone) {
-        const { error } = await supabase.auth.signInWithPassword({ phone: id, password });
-        if (error) throw error;
+      if (error) {
+        setError(error.message);
       } else {
-        const { data: rpcEmail, error: rpcErr } = await supabase.rpc('get_email_by_username', {
-          p_username: id.toLowerCase(),
-        });
-        if (rpcErr || !rpcEmail) throw new Error('Invalid credentials');
-        emailToUse = rpcEmail as string;
-      }
-
-      if (emailToUse) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: emailToUse,
-          password,
-        });
-        if (error) throw error;
-      }
-
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session) throw new Error('Login failed');
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.session.user.id)
-        .single();
-
-      if (!profile?.username || !profile?.first_name || !profile?.last_name) {
-        router.push('/profile-settings');
-      } else {
-        router.push('/');
+        setMessage('Password updated successfully!');
+        setTimeout(() => router.push('/login'), 2000);
       }
     } catch (err) {
-      console.error(err);
-      alert('Invalid login credentials');
+      setError('An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div
       className="
-        min-h-screen flex items-center justify-center 
+        min-h-screen flex items-center justify-center
         bg-gradient-to-br from-pink-50 via-white to-fuchsia-100
         relative overflow-hidden
       "
@@ -87,7 +74,7 @@ export default function LoginPage() {
       </div>
 
       <form
-        onSubmit={handleLogin}
+        onSubmit={handleReset}
         autoComplete="off"
         className="
           relative w-full max-w-sm
@@ -97,7 +84,7 @@ export default function LoginPage() {
           bg-white/40
           border border-white/20
           shadow-[0_8px_40px_rgba(0,0,0,0.12)]
-          space-y-8
+          space-y-6
         "
       >
         {/* Logo */}
@@ -112,42 +99,46 @@ export default function LoginPage() {
           />
         </div>
 
-        {/* Identifier Input */}
-        <input
-          className="
-            w-full px-4 py-3 text-lg rounded-2xl 
-            bg-white/60 backdrop-blur border border-white/30 
-            shadow-inner 
-            focus:outline-none focus:ring-2 
-            focus:ring-pink-500/40
-          "
-          placeholder="Phone number, email, or username"
-          value={identifier}
-          onChange={(e) => setIdentifier(e.target.value)}
-          required
-        />
+        <h2 className="text-center text-xl font-semibold text-gray-800">
+          Reset Your Password
+        </h2>
 
-        {/* Password */}
+        {/* Error Message */}
+        {error && (
+          <div className="p-3 rounded-xl bg-red-100 text-red-700 text-sm text-center">
+            {error}
+          </div>
+        )}
+
+        {/* Success Message */}
+        {message && (
+          <div className="p-3 rounded-xl bg-green-100 text-green-700 text-sm text-center">
+            {message}
+          </div>
+        )}
+
+        {/* New Password */}
         <div className="relative">
           <input
             className="
-              w-full px-4 py-3 pr-12 text-lg rounded-2xl 
-              bg-white/60 backdrop-blur border border-white/30 
-              shadow-inner 
-              focus:outline-none focus:ring-2 
+              w-full px-4 py-3 pr-12 text-lg rounded-2xl
+              bg-white/60 backdrop-blur border border-white/30
+              shadow-inner
+              focus:outline-none focus:ring-2
               focus:ring-pink-500/40
             "
             type={showPassword ? 'text' : 'password'}
-            placeholder="Password"
+            placeholder="New Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            minLength={6}
           />
 
           <button
             type="button"
             className="
-              absolute right-4 top-1/2 -translate-y-1/2 
+              absolute right-4 top-1/2 -translate-y-1/2
               text-gray-500 hover:text-gray-700 transition
             "
             onClick={() => setShowPassword((v) => !v)}
@@ -165,37 +156,45 @@ export default function LoginPage() {
           </button>
         </div>
 
-        {/* Forgot Password */}
-        <div className="text-right">
-          <span
-            className="text-fuchsia-600 text-sm cursor-pointer hover:underline"
-            onClick={() => router.push('/forgot-password')}
-          >
-            Forgot Password?
-          </span>
-        </div>
+        {/* Confirm Password */}
+        <input
+          className="
+            w-full px-4 py-3 text-lg rounded-2xl
+            bg-white/60 backdrop-blur border border-white/30
+            shadow-inner
+            focus:outline-none focus:ring-2
+            focus:ring-pink-500/40
+          "
+          type={showPassword ? 'text' : 'password'}
+          placeholder="Confirm Password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
+          minLength={6}
+        />
 
         {/* Submit Button */}
         <button
           type="submit"
+          disabled={loading}
           className="
             w-full py-3 rounded-2xl text-lg font-semibold text-white
             bg-gradient-to-r from-fuchsia-600 to-pink-500
             shadow-lg shadow-pink-500/30
             hover:opacity-90 transition
+            disabled:opacity-50
           "
         >
-          Sign In
+          {loading ? 'Updating...' : 'Reset Password'}
         </button>
 
-        {/* Sign Up */}
+        {/* Back to Login */}
         <div className="text-center text-gray-700 text-base">
-          Don’t have an account?{' '}
           <span
             className="text-fuchsia-600 font-semibold cursor-pointer hover:underline"
-            onClick={() => router.push('/signup')}
+            onClick={() => router.push('/login')}
           >
-            Sign Up
+            Back to Sign In
           </span>
         </div>
       </form>
